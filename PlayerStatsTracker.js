@@ -10,11 +10,45 @@ const defaultConfig = {
   sprinting: true,
   xp: true
 }
+const defaultPlayerData = {
+  death: 0,
+  kill: 0,
+  killedMob: {
+    "house": 0
+  },
+  destroy: 0,
+  place: 0,
+  eat: 0,
+  totem: 0,
+  xp: 0,
+  level: 0,
+
+}
 const config = data.parseJson(new JsonConfigFile('plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig)))
 
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
 let db = new KVDatabase('./plugins/PlayerStatsTracker/data')
+if (!db) {
+  logger.error('数据库文件打开失败')
+}
+
+function getDB(name) {
+  let data = db.get(name)
+  if (data) {
+    return data
+  } else {
+    if (!db.set(name, defaultPlayerData)) {
+      logger.error('数据库写入失败')
+      return null
+    }
+    return this(name)
+  }
+}
+
+function setDB(name,value) {
+  
+}
 
 // 进入游戏
 mc.listen('onJoin', (player) => {
