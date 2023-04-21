@@ -15,6 +15,37 @@ const crops = [
 
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
+const command1 = mc.newCommand('stats', '查看统计信息', PermType.Any)
+command1.optional('player', ParamType.String)
+command1.overload(['player'])
+command1.setCallback((cmd, origin, output, results) => {
+  if (!results.player) {
+    if (!origin.player) {
+      outputStats(results.player)
+    } else {
+      if (results.player.isOP() || results.player === origin.player.realName) {
+        showStats(results.player)
+      } else {
+        output.err('你无权查询其他玩家')
+      }
+    }
+  } else {
+    if (!origin.player) {
+      output.error('请指定玩家')
+    } else {
+      showStats(origin.player)
+    }
+  }
+})
+command1.setup()
+
+const command2 = mc.newCommand('backup', '备份统计信息数据库', PermType.Console)
+command2.overload([])
+command2.setCallback((cmd, origin, output, results) => {
+  File.copy()
+})
+command2.setup()
+
 let db = new DataBase('./plugins/PlayerStatsTracker/data')
 
 class DataBase {
@@ -167,6 +198,14 @@ class DataBase {
     }
     return true
   }
+}
+
+function showStats(name) {
+
+}
+
+function outputStats(name) {
+
 }
 
 // 进入游戏
