@@ -332,7 +332,8 @@ mc.listen('onExperienceAdd', (player, exp) => {
 
 // 弹射物创建完毕
 mc.listen('onProjectileCreated', (shooter, entity) => {
-
+  if(entity.type === 'minecraft:fishing_hook') {
+  }
 })
 
 // 方块被弹射物击中
