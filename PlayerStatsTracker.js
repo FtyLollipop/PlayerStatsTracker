@@ -13,6 +13,41 @@ const crops = [
   'minecraft:torchflower_crop'
 ]
 
+const defaultPlayerData = {
+  death: 0,
+  killed: 0,
+  damageTaken: 0,
+  damageDealt: 0,
+  destroyed: 0,
+  placed: 0,
+  ate: 0,
+  totem: 0,
+  expObtained: 0,
+  highestLevel: 0,
+  playTime: 0,
+  distanceWalked: 0,
+  distanceFlown: 0,
+  subStats: {
+    ate: {
+      "minecraft:golden_apple": 0,
+      "minecraft:enchanted_golden_apple": 0
+    },
+    killed: {
+      "minecraft:horse": 0
+    },
+    planted: {
+      'mineraft:weat': 0,
+      'mineraft:potatoes': 0,
+      'mineraft:carrots': 0,
+      'minecraft:melon_stem': 0,
+      'minecraft:pumpkin_stem': 0,
+      'minecraft:beetroot': 0,
+      'minecraft:pitcher_crop': 0,
+      'minecraft:torchflower_crop': 0
+    }
+  }
+}
+
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
 const command1 = mc.newCommand('stats', '查看统计信息', PermType.Any)
@@ -42,52 +77,20 @@ command1.setup()
 const command2 = mc.newCommand('backup', '备份统计信息数据库', PermType.Console)
 command2.overload([])
 command2.setCallback((cmd, origin, output, results) => {
+  File.mkdir()
   File.copy()
 })
 command2.setup()
 
-let db = new DataBase('./plugins/PlayerStatsTracker/data')
+let db = new DataBase('./plugins/PlayerStatsTracker/data', defaultPlayerData)
 
 class DataBase {
-  defaultPlayerData
   kvdb
+  defaultPlayerData
 
-  constructor(str) {
-    this.defaultPlayerData = {
-      death: 0,
-      killed: 0,
-      damageTaken: 0,
-      damageDealt: 0,
-      destroyed: 0,
-      placed: 0,
-      ate: 0,
-      totem: 0,
-      expObtained: 0,
-      highestLevel: 0,
-      playTime: 0,
-      distanceWalked: 0,
-      distanceFlown: 0,
-      subStats: {
-        ate: {
-          "minecraft:golden_apple": 0,
-          "minecraft:enchanted_golden_apple": 0
-        },
-        killed: {
-          "minecraft:horse": 0
-        },
-        planted: {
-          'mineraft:weat': 0,
-          'mineraft:potatoes': 0,
-          'mineraft:carrots': 0,
-          'minecraft:melon_stem': 0,
-          'minecraft:pumpkin_stem': 0,
-          'minecraft:beetroot': 0,
-          'minecraft:pitcher_crop': 0,
-          'minecraft:torchflower_crop': 0
-        }
-      }
-    }
+  constructor(str, defaultPlayerData) {
     this.kvdb = new KVDatabase(str)
+    this.defaultPlayerData = defaultPlayerData
     if (!this.kvdb) {
       this.readErr()
     }
