@@ -16,6 +16,7 @@ const defaultPlayerData = {
   placed: 0, // 放置方块数
   planted: 0, // 种植次数
   harvested: 0, // 收获次数
+  mined: 0, // 挖矿数
   ate: 0, // 吃掉的食物数
   totem: 0, // 消耗的图腾数
   chat: 0, // 聊天消息条数
@@ -23,7 +24,7 @@ const defaultPlayerData = {
   jumped: 0, // 跳跃次数
   expObtained: 0, // 累计获得的经验数
   highestLevel: 0, // 最高到达的等级
-  playTime: 0, // 游玩时间（10秒记一次）
+  playTime: 0, // 游玩时间
   lastOnline: 0, // 最后在线时间
   loginDays: 0, // 登录天数
   distanceWalked: 0, // 行走距离
@@ -62,9 +63,58 @@ const defaultPlayerData = {
       'minecraft:melon_block': 0,
       'minecraft:nether_wart': 0,
       'minecraft:cocoa': 0
+    },
+    mined: { // 具体采矿数
+      'minecraft:coal_ore': 0,
+      'minecraft:deepslate_coal_ore': 0,
+      'minecraft:iron_ore': 0,
+      'minecraft:deepslate_iron_ore': 0,
+      'minecraft:copper_ore': 0,
+      'minecraft:deepslate_copper_ore': 0,
+      'minecraft:lapis_ore': 0,
+      'minecraft:deepslate_lapis_ore': 0,
+      'minecraft:gold_ore': 0,
+      'minecraft:deepslate_gold_ore': 0,
+      'minecraft:redstone_ore': 0,
+      'minecraft:deepslate_redstone_ore': 0,
+      'minecraft:lit_redstone_ore': 0,
+      'minecraft:lit_deepslate_redstone_ore': 0,
+      'minecraft:diamond_ore': 0,
+      'minecraft:deepslate_diamond_ore': 0,
+      'minecraft:emerald_ore': 0,
+      'minecraft:deepslate_emerald_ore': 0,
+      'minecraft:quartz_ore': 0,
+      'minecraft:nether_gold_ore': 0,
+      'minecraft:ancient_debris': 0
     }
   }
 }
+
+const listenPlacedBlocks = [
+  'minecraft:melon_block',
+  'minecraft:pumpkin',
+  'minecraft:coal_ore',
+  'minecraft:deepslate_coal_ore',
+  'minecraft:iron_ore',
+  'minecraft:deepslate_iron_ore',
+  'minecraft:copper_ore',
+  'minecraft:deepslate_copper_ore',
+  'minecraft:lapis_ore',
+  'minecraft:deepslate_lapis_ore',
+  'minecraft:gold_ore',
+  'minecraft:deepslate_gold_ore',
+  'minecraft:redstone_ore',
+  'minecraft:deepslate_redstone_ore',
+  'minecraft:lit_redstone_ore',
+  'minecraft:lit_deepslate_redstone_ore',
+  'minecraft:diamond_ore',
+  'minecraft:deepslate_diamond_ore',
+  'minecraft:emerald_ore',
+  'minecraft:deepslate_emerald_ore',
+  'minecraft:quartz_ore',
+  'minecraft:nether_gold_ore',
+  'minecraft:ancient_debris'
+]
 
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
@@ -125,11 +175,13 @@ command3.setCallback((cmd, origin, output, results) => {
 command3.setup()
 
 let db
-let cakeTimers = new Map()
-let melonTimers = new Map()
-let pumpkinTimers = new Map()
+// 服务器启动
 mc.listen('onServerStarted', () => {
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, dbUpdateInterval)
+  // placedBlocks = db.getPlacedBlocks()
+  // setInterval(() => {
+  //   db.setPlacedBlocks(placedBlocks)
+  // }, 5000)
 })
 
 function showStats(name) {
@@ -266,10 +318,14 @@ mc.listen('onConsumeTotem', (player) => {
 //   logger.info(block.type)
 // })
 
-// // 方块改变
-// mc.listen('onBlockChanged', (beforeBlock,afterBlock) => {
-//   logger.info(beforeBlock.type,':',beforeBlock.tileData,'  ',afterBlock.type,':',afterBlock.tileData)
-// })
+// 方块改变
+mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
+  if (listenPlacedBlocks.includes(beforeBlock.type)) {
+    setTimeout(() => {
+      db.deletePlacedBlock(beforeBlock.pos)
+    }, 5)
+  }
+})
 
 // 破坏方块
 mc.listen('onDestroyBlock', (player, block) => {
@@ -289,8 +345,14 @@ mc.listen('onDestroyBlock', (player, block) => {
     if (cropsGrownData.hasOwnProperty(block.type) && cropsGrownData[block.type].includes(block.tileData)) {
       db.set(player.realName, 'harvested', 'add', 1)
       db.setSub(player.realName, 'harvested', block.type, 'add', 1)
-      return
+    } else if (!db.hasPlacedBlocks(block.pos)) {
+      db.set(player.realName, 'harvested', 'add', 1)
+      db.setSub(player.realName, 'harvested', block.type, 'add', 1)
     }
+    return
+  } else if (defaultPlayerData.subStats.mined.hasOwnProperty(block.type) && !db.hasPlacedBlocks(block.pos)) {
+    db.set(player.realName, 'mined', 'add', 1)
+    db.setSub(player.realName, 'mined', block.type, 'add', 1)
   }
 })
 
@@ -301,6 +363,9 @@ mc.listen('afterPlaceBlock', (player, block) => {
   if (defaultPlayerData.subStats.planted.hasOwnProperty(block.type)) {
     db.set(player.realName, 'planted', 'add', 1)
     db.setSub(player.realName, 'planted', block.type, 'add', 1)
+  }
+  if (listenPlacedBlocks.includes(block.type)) {
+    db.addPlacedBlock(block.pos)
   }
 })
 
@@ -337,13 +402,13 @@ mc.listen('onProjectileHitEntity', (entity, source) => {
 
 // ==============================================================================================
 class DataBase {
-  defaultPlayerData
-  dbUpdateInterval
+  playerDataTemplate
+  placedBlocks
   kvdb
 
-  constructor(str, defaultPlayerData, dbUpdateInterval) {
-    this.defaultPlayerData = defaultPlayerData
-    Object.freeze(this.defaultPlayerData)
+  constructor(str, playerDataTemplate, placedBlocksSaveInterval) {
+    this.playerDataTemplate = playerDataTemplate
+    Object.freeze(this.playerDataTemplate)
     this.dbUpdateInterval = dbUpdateInterval
     this.kvdb = new KVDatabase(str)
     if (!this.kvdb) {
@@ -352,7 +417,8 @@ class DataBase {
     }
     if (!this.kvdb.get('data')) {
       this.kvdb.set('data', {
-        lastUpdate: Date.now()
+        lastUpdate: Date.now(),
+        placedBlocks: []
       })
     } else {
       if (this.kvdb.get('data').lastUpdate > Date.now()) {
@@ -360,6 +426,10 @@ class DataBase {
         return null
       }
     }
+    this.placedBlocks = new Set(this.kvdb.get('data').placedBlocks)
+    setInterval(() => {
+      this.savePlacedBlocks()
+    }, placedBlocksSaveInterval)
   }
 
   readErr() {
@@ -396,7 +466,34 @@ class DataBase {
 
   // 洗数据
   cleanData(playerData) {
-    return this.dataAssign(defaultPlayerData, playerData)
+    return this.dataAssign(this.playerDataTemplate, playerData)
+  }
+
+  // 获取方块放置记录
+  getPlacedBlocks() {
+    return this.placedBlocks
+  }
+
+  // 设置新的方块放置记录
+  addPlacedBlock(intPos) {
+    return this.placedBlocks.add([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
+  }
+
+  deletePlacedBlock(intPos) {
+    return this.placedBlocks.delete([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
+  }
+
+  // 查询是否存在方块放置记录
+  hasPlacedBlocks(intPos) {
+    return this.placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
+  }
+
+  // 保存方块放置记录
+  savePlacedBlocks() {
+    let data = this.kvdb.get('data')
+    data.placedBlocks = Array.from(this.placedBlocks)
+    data.lastUpdate = Date.now()
+    this.kvdb.set('data', data)
   }
 
   // 获取玩家某一项统计
