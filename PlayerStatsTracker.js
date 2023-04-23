@@ -14,6 +14,7 @@ const defaultPlayerData = {
   damageDealt: 0, // 造成的伤害
   destroyed: 0, // 破坏方块数
   placed: 0, // 放置方块数
+  tilled: 0, // 耕地数
   planted: 0, // 种植次数
   harvested: 0, // 收获次数
   mined: 0, // 挖矿数
@@ -77,8 +78,6 @@ const defaultPlayerData = {
       'minecraft:deepslate_gold_ore': 0,
       'minecraft:redstone_ore': 0,
       'minecraft:deepslate_redstone_ore': 0,
-      'minecraft:lit_redstone_ore': 0,
-      'minecraft:lit_deepslate_redstone_ore': 0,
       'minecraft:diamond_ore': 0,
       'minecraft:deepslate_diamond_ore': 0,
       'minecraft:emerald_ore': 0,
@@ -114,6 +113,22 @@ const listenPlacedBlocks = [
   'minecraft:quartz_ore',
   'minecraft:nether_gold_ore',
   'minecraft:ancient_debris'
+]
+
+const redstoneOres = [
+  'minecraft:redstone_ore',
+  'minecraft:lit_redstone_ore',
+]
+
+const deepslateRedstoneOres = [
+  'minecraft:deepslate_redstone_ore',
+  'minecraft:lit_deepslate_redstone_ore',
+]
+
+const preFarmlandBlocks = [
+  'minecraft:dirt',
+  'minecraft:grass',
+  'minecraft:grass_path'
 ]
 
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
@@ -175,6 +190,7 @@ command3.setCallback((cmd, origin, output, results) => {
 command3.setup()
 
 let db
+let newFarmlands = new Set()
 // 服务器启动
 mc.listen('onServerStarted', () => {
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, placedBlocksSaveInterval)
@@ -304,17 +320,41 @@ mc.listen('onConsumeTotem', (player) => {
   db.set(player.realName, 'totem', 'add', 1)
 })
 
-// // 玩家对方快使用物品
-// mc.listen('onUseItemOn', (player,item,block,side,pos) => {
-//   logger.info(block.type)
-// })
+// 玩家对方快使用物品
+mc.listen('onUseItemOn', (player, item, block, side, pos) => {
+  const hoes = [
+    'minecraft:wooden_hoe',
+    'minecraft:stone_hoe',
+    'minecraft:iron_hoe',
+    'minecraft:diamond_hoe',
+    'minecraft:golden_hoe',
+    'minecraft:netherite_hoe'
+  ]
+  if (hoes.includes(item.type) && preFarmlandBlocks.includes(block.type)) {
+    const blockPosStr = [block.pos.x, ',', block.pos.y, ',', block.pos.z, ',', block.pos.dimid].join('')
+    setTimeout(() => {
+      if (newFarmlands.has(blockPosStr)) {
+        newFarmlands.delete(blockPosStr)
+        db.set(player.realName, 'tilled', 'add', 1)
+      }
+    }, 5)
+  }
+})
 
 // 方块改变
 mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
   if (listenPlacedBlocks.includes(beforeBlock.type)) {
+    if ((!redstoneOres.includes(beforeBlock.type) || !redstoneOres.includes(afterBlock.type)) && (!deepslateRedstoneOres.includes(beforeBlock.type) || !deepslateRedstoneOres.includes(afterBlock.type))) {
+      setTimeout(() => {
+        db.deletePlacedBlock(beforeBlock.pos)
+      }, 5)
+    }
+  } else if (afterBlock.type === 'minecraft:farmland' && preFarmlandBlocks.includes(beforeBlock.type)) {
+    const blockPosStr = [beforeBlock.pos.x, ',', beforeBlock.pos.y, ',', beforeBlock.pos.z, ',', beforeBlock.pos.dimid].join('')
+    newFarmlands.add(blockPosStr)
     setTimeout(() => {
-      db.deletePlacedBlock(beforeBlock.pos)
-    }, 5)
+      newFarmlands.delete(blockPosStr)
+    }, 50)
   }
 })
 
@@ -330,20 +370,30 @@ mc.listen('onDestroyBlock', (player, block) => {
     'minecraft:nether_wart': [3],
     'minecraft:cocoa': [8, 9, 10, 11]
   }
+  const litRedstoneOres = [
+    'minecraft:lit_redstone_ore',
+    'minecraft:lit_deepslate_redstone_ore'
+  ]
   if (player.isSimulatedPlayer()) { return }
   db.set(player.realName, 'destroyed', 'add', 1)
   if (defaultPlayerData.subStats.harvested.hasOwnProperty(block.type)) {
     if (cropsGrownData.hasOwnProperty(block.type) && cropsGrownData[block.type].includes(block.tileData)) {
       db.set(player.realName, 'harvested', 'add', 1)
       db.setSub(player.realName, 'harvested', block.type, 'add', 1)
-    } else if (!db.hasPlacedBlocks(block.pos)) {
+    } else if (!db.hasPlacedBlock(block.pos)) {
       db.set(player.realName, 'harvested', 'add', 1)
       db.setSub(player.realName, 'harvested', block.type, 'add', 1)
     }
     return
-  } else if (defaultPlayerData.subStats.mined.hasOwnProperty(block.type) && !db.hasPlacedBlocks(block.pos)) {
+  } else if ((defaultPlayerData.subStats.mined.hasOwnProperty(block.type) || litRedstoneOres.includes(block.type)) && !db.hasPlacedBlock(block.pos)) {
     db.set(player.realName, 'mined', 'add', 1)
-    db.setSub(player.realName, 'mined', block.type, 'add', 1)
+    if (redstoneOres.includes(block.type)) {
+      db.setSub(player.realName, 'mined', 'minecraft:redstone_ore', 'add', 1)
+    } else if (deepslateRedstoneOres.includes(block.type)) {
+      db.setSub(player.realName, 'mined', 'minecraft:deepslate_redstone_ore', 'add', 1)
+    } else {
+      db.setSub(player.realName, 'mined', block.type, 'add', 1)
+    }
   }
 })
 
@@ -479,7 +529,7 @@ class DataBase {
   }
 
   // 查询是否存在方块放置记录
-  hasPlacedBlocks(intPos) {
+  hasPlacedBlock(intPos) {
     return this.placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
