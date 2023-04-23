@@ -196,8 +196,9 @@ mc.listen('onServerStarted', () => {
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, placedBlocksSaveInterval)
 })
 
-function showStats(name) {
-  logger.info(data.toJson(db.getPlayer(name), 4))
+function showStats(player, name) {
+  let form = mc.newCustomForm()
+  form.setTitle('')
 }
 
 function outputStats(name) {
