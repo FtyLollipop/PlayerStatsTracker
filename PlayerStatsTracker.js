@@ -1,11 +1,11 @@
 const defaultConfig = {
   playTimeInterval: 10,
-  dbUpdateInterval: 1000
+  placedBlocksSaveInterval: 10000
 }
 
 const config = new JsonConfigFile('plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig))
 const playTimeInterval = Math.floor(config.get('playTimeInterval')) || defaultConfig.playTimeInterval
-const dbUpdateInterval = Math.floor(config.get('dbUpdateInterval')) || defaultConfig.dbUpdateInterval
+const placedBlocksSaveInterval = Math.floor(config.get('placedBlocksSaveInterval')) || defaultConfig.placedBlocksSaveInterval
 
 const defaultPlayerData = {
   death: 0, // 死亡次数
@@ -177,11 +177,7 @@ command3.setup()
 let db
 // 服务器启动
 mc.listen('onServerStarted', () => {
-  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, dbUpdateInterval)
-  // placedBlocks = db.getPlacedBlocks()
-  // setInterval(() => {
-  //   db.setPlacedBlocks(placedBlocks)
-  // }, 5000)
+  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, placedBlocksSaveInterval)
 })
 
 function showStats(name) {
@@ -260,11 +256,6 @@ mc.listen('onChat', (player, msg) => {
 mc.listen('onJump', (player) => {
   if (player.isSimulatedPlayer()) { return }
   db.set(player.realName, 'jumped', 'add', 1)
-})
-
-// 潜行
-mc.listen('onSneak', (player, isSneaking) => {
-
 })
 
 // 使用物品
@@ -369,11 +360,6 @@ mc.listen('afterPlaceBlock', (player, block) => {
   }
 })
 
-// 疾跑
-mc.listen('onChangeSprinting', (player, sprinting) => {
-  if (player.isSimulatedPlayer()) { return }
-})
-
 // 获得经验
 mc.listen('onExperienceAdd', (player, exp) => {
   if (player.isSimulatedPlayer()) { return }
@@ -400,6 +386,16 @@ mc.listen('onProjectileHitEntity', (entity, source) => {
 
 })
 
+// 疾跑
+mc.listen('onChangeSprinting', (player, sprinting) => {
+  if (player.isSimulatedPlayer()) { return }
+})
+
+// 潜行
+mc.listen('onSneak', (player, isSneaking) => {
+
+})
+
 // ==============================================================================================
 class DataBase {
   playerDataTemplate
@@ -409,7 +405,6 @@ class DataBase {
   constructor(str, playerDataTemplate, placedBlocksSaveInterval) {
     this.playerDataTemplate = playerDataTemplate
     Object.freeze(this.playerDataTemplate)
-    this.dbUpdateInterval = dbUpdateInterval
     this.kvdb = new KVDatabase(str)
     if (!this.kvdb) {
       this.readErr()
