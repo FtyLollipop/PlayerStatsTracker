@@ -7,6 +7,10 @@ const config = new JsonConfigFile('plugins/PlayerStatsTracker/config.json', data
 const playTimeInterval = Math.floor(config.get('playTimeInterval')) || defaultConfig.playTimeInterval
 const placedBlocksSaveInterval = Math.floor(config.get('placedBlocksSaveInterval')) || defaultConfig.placedBlocksSaveInterval
 
+const format = {
+
+}
+
 const defaultPlayerData = {
   death: 0, // 死亡次数
   killed: 0, // 击杀数
@@ -149,7 +153,7 @@ command1.setCallback((cmd, origin, output, results) => {
         if (!data.name2xuid(results.player)) {
           output.error('无此玩家')
         } else {
-          showStats(results.player)
+          showStats(origin.player, results.player)
         }
       } else {
         output.error('你无权查询其他玩家')
@@ -159,7 +163,7 @@ command1.setCallback((cmd, origin, output, results) => {
     if (!origin.player) {
       output.error('请指定玩家')
     } else {
-      showStats(origin.player.realName)
+      showStats(origin.player, origin.player.realName)
     }
   }
 })
@@ -197,12 +201,28 @@ mc.listen('onServerStarted', () => {
 })
 
 function showStats(player, name) {
-  let form = mc.newCustomForm()
-  form.setTitle('')
+  let form = mc.newSimpleForm()
+  form.setTitle(name + '的统计')
+  form.setContent(formatStats(db.getPlayer(name)))
+  player.sendForm(form, () => {
+  })
 }
 
 function outputStats(name) {
   logger.info(data.toJson(db.getPlayer(name), 4))
+}
+
+function formatStats(stats) {
+  let str = `
+死亡: ${stats.death}
+击杀: ${stats.killed}
+累计造成伤害: ${stats.damageDealt}
+累计受到伤害: ${stats.damageTaken}
+破坏方块: ${stats.destroyed}
+放置方块: ${stats.placed}
+`
+
+  return str
 }
 
 function updateLastOnline(name) {
