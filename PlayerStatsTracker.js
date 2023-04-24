@@ -7,10 +7,6 @@ const config = new JsonConfigFile('plugins/PlayerStatsTracker/config.json', data
 const playTimeInterval = Math.floor(config.get('playTimeInterval')) || defaultConfig.playTimeInterval
 const placedBlocksSaveInterval = Math.floor(config.get('placedBlocksSaveInterval')) || defaultConfig.placedBlocksSaveInterval
 
-const format = {
-
-}
-
 const defaultPlayerData = {
   death: 0, // 死亡次数
   killed: 0, // 击杀数
@@ -212,6 +208,7 @@ let db
 let newFarmlands = new Set()
 // 服务器启动
 mc.listen('onServerStarted', () => {
+  logger.info((new Date()).toJSON())
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, placedBlocksSaveInterval)
 })
 
@@ -227,7 +224,7 @@ function showStats(player, name) {
 function showRanking(player, key) {
   const rankingButtons = [
     {
-      text: '基础信息', subButtons: [
+      text: '§0基础信息', subButtons: [
         { text: '游玩时间', key: 'playTime' },
         { text: '登录天数', key: 'loginDays' },
         { text: '破坏方块', key: 'destroyed' },
@@ -243,7 +240,7 @@ function showRanking(player, key) {
       ]
     },
     {
-      text: '战斗', subButtons: [
+      text: '§c战斗', subButtons: [
         { text: '击杀', key: 'killed' },
         { text: '死亡', key: 'death' },
         { text: '累计造成伤害', key: 'damageDealt' },
@@ -251,24 +248,58 @@ function showRanking(player, key) {
       ]
     },
     {
-      text: '挖矿', subButtons: [
+      text: '§8挖矿', subButtons: [
         { text: '主世界挖矿', key: 'overworldMined' },
         { text: '下界挖矿', key: 'netherMined' }
       ]
     },
     {
-      text: '种植', subButtons: [
+      text: '§2种植', subButtons: [
         { text: '耕地', key: 'tilled' },
         { text: '种植', key: 'planted' },
         { text: '收获', key: 'harvested' }
       ]
     }
   ]
-  let selectForm = mc.newSimpleForm()
-  selectForm.setTitle('排行榜')
-  selectForm.setContent(formatRanking(db.getRanking('death'), true))
-  player.sendForm(selectForm, () => {
-  })
+
+  let optionsForm = mc.newSimpleForm()
+  let subOptionsForm = null
+  let subOptionsFormId = -1
+  optionsForm.setTitle('统计排行榜')
+  for (let i = 0; i < rankingButtons.length; i++) {
+    optionsForm.addButton(rankingButtons[i].text)
+  }
+  player.sendForm(optionsForm, optionsFormHandler)
+
+  function optionsFormHandler(player, id) {
+    if (id == null) { return }
+    subOptionsFormId = id
+    subOptionsForm = mc.newSimpleForm()
+    subOptionsForm.setTitle('统计排行榜-' + rankingButtons[id].text)
+    for (let i = 0; i < rankingButtons[id].subButtons.length; i++) {
+      subOptionsForm.addButton(rankingButtons[id].subButtons[i].text)
+    }
+    player.sendForm(subOptionsForm, subOptionsFormHandler)
+  }
+
+  function subOptionsFormHandler(player, id) {
+    if (id == null) {
+      player.sendForm(optionsForm, optionsFormHandler)
+    } else {
+      let rankingForm = mc.newSimpleForm()
+      rankingForm.setTitle('统计排行榜-' + rankingButtons[subOptionsFormId].subButtons[id].text)
+      if (rankingButtons[subOptionsFormId].subButtons[id].key === 'playTime') {
+        rankingForm.setContent(formatRanking(db.getRanking(rankingButtons[subOptionsFormId].subButtons[id].key), true, secToTime))
+      } else {
+        rankingForm.setContent(formatRanking(db.getRanking(rankingButtons[subOptionsFormId].subButtons[id].key), true))
+      }
+      player.sendForm(rankingForm, rankingFormHandler)
+    }
+  }
+
+  function rankingFormHandler(player, data) {
+    player.sendForm(subOptionsForm, subOptionsFormHandler)
+  }
 }
 
 function secToTime(sec) {
@@ -278,14 +309,18 @@ function secToTime(sec) {
   return [h >= 10 ? h : '0' + h, ':', m >= 10 ? m : '0' + m, ':', s >= 10 ? s : '0' + s].join('')
 }
 
+function dateFormat(date) {
+  
+}
+
 function formatStats(stats, colorful) {
   const reg = /§./g
-  let str = `§l========== 基础 ==========
-最后在线时间: ${new Date(stats.lastOnline).toLocaleString('zh-CN')}
+  let str = `§l========== 基础 ==========§r
+最后在线时间: ${(new Date(stats.lastOnline)).toLocaleString()}
 游玩时间: ${secToTime(stats.playTime)}
 登录天数: ${stats.loginDays}
 破坏方块: ${stats.destroyed}
-放置方块: ${stats.placed}subStats
+放置方块: ${stats.placed}
 跳跃: ${stats.jumped}
 行走距离: ${stats.distanceWalked}
 飞行距离: ${stats.distanceFlown}
@@ -356,7 +391,7 @@ function formatStats(stats, colorful) {
   return colorful ? str : str.replace(reg, '')
 }
 
-function formatRanking(ranking, colorful) {
+function formatRanking(ranking, colorful, func = (str) => { return str }) {
   const reg = /§./g
   let str = ''
   let rank = 0
@@ -371,16 +406,16 @@ function formatRanking(ranking, colorful) {
     prev = ranking[i].data
     switch (rank) {
       case 1:
-        str += `§g§l${rank}. ${ranking[i].name}:§r ${ranking[i].data}`
+        str += `§g§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       case 2:
-        str += `\n§7§l${rank}. ${ranking[i].name}:§r ${ranking[i].data}`
+        str += `\n§7§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       case 3:
-        str += `\n§6§l${rank}. ${ranking[i].name}:§r ${ranking[i].data}`
+        str += `\n§6§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       default:
-        str += `\n${rank}. ${ranking[i].name}: ${ranking[i].data}`
+        str += `\n${rank}. ${ranking[i].name}: ${func(ranking[i].data)}`
     }
   }
   return colorful ? str : str.replace(reg, '')
@@ -766,29 +801,21 @@ class DataBase {
       if (items.length > 1) {
         index = partition(items, left, right)
         if (left < index - 1) {
-          quickSort(items, left, index - 1)
+          sort(items, left, index - 1)
         }
         if (index < right) {
-          quickSort(items, index, right)
+          sort(items, index, right)
         }
       }
       return items
     }
     let names = this.kvdb.listKey()
-    let ranking = [
-      { name: 'AAS', data: 87 },
-      { name: 'ssss', data: 1 },
-      { name: 'SCZSss', data: 86 },
-      { name: 'fdsgrr', data: 22 },
-      { name: 'd11s', data: 55 },
-      { name: 'DWD', data: 99 },
-      { name: 'DDDDDDDS', data: 22 },
-    ]
-    // for (let i = 0; i < names.length; i++) {
-    //   if (names[i] !== 'data') {
-    //     ranking.push({ names: names[i], data: this.kvdb.get(names[i]).key })
-    //   }
-    // }
+    let ranking = []
+    for (let i = 0; i < names.length; i++) {
+      if (names[i] !== 'data') {
+        ranking.push({ name: names[i], data: this.kvdb.get(names[i])[key] })
+      }
+    }
 
     return sort(ranking)
   }
