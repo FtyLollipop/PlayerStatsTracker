@@ -1,11 +1,15 @@
 const defaultConfig = {
-  playTimeInterval: 10,
-  placedBlocksSaveInterval: 10000
+  timezone: 8,
+  backupLocation: './plugins/PlayerStatsTracker/backups',
+  playTimeInterval: 1,
+  databaseSaveInterval: 10000
 }
 
-const config = new JsonConfigFile('plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig))
+const config = new JsonConfigFile('./plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig))
+const timezone = config.get('timezone') || defaultConfig.timezone
+const backupLocation = config.get('backupLocation') || defaultConfig.backupLocation
 const playTimeInterval = Math.floor(config.get('playTimeInterval')) || defaultConfig.playTimeInterval
-const placedBlocksSaveInterval = Math.floor(config.get('placedBlocksSaveInterval')) || defaultConfig.placedBlocksSaveInterval
+const databaseSaveInterval = Math.floor(config.get('databaseSaveInterval')) || defaultConfig.databaseSaveInterval
 
 const defaultPlayerData = {
   death: 0, // 死亡次数
@@ -196,11 +200,14 @@ command3.setCallback((cmd, origin, output, results) => {
 })
 command3.setup()
 
-let command4 = mc.newCommand('statsbackup', '备份统计信息数据库', PermType.Console)
+let command4 = mc.newCommand('statsbackup', '备份统计信息数据库', PermType.GameMasters)
 command4.overload([])
 command4.setCallback((cmd, origin, output, results) => {
-  File.mkdir()
-  File.copy()
+  if (db.dbBackup()) {
+    output.success('数据库备份完成')
+  } else {
+    output.error('数据库备份失败')
+  }
 })
 command4.setup()
 
@@ -208,8 +215,7 @@ let db
 let newFarmlands = new Set()
 // 服务器启动
 mc.listen('onServerStarted', () => {
-  logger.info((new Date()).toJSON())
-  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, placedBlocksSaveInterval)
+  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
 })
 
 function showStats(player, name) {
@@ -309,14 +315,40 @@ function secToTime(sec) {
   return [h >= 10 ? h : '0' + h, ':', m >= 10 ? m : '0' + m, ':', s >= 10 ? s : '0' + s].join('')
 }
 
-function dateFormat(date) {
-  
+function dateToString(date, format = 'YYYY-MM-DD hh:mm:ss') {
+  return dateToDateString(date, dateToTimeString(date, format))
+}
+
+function dateToDateString(date, format = 'YYYY-MM-DD') {
+  const h = date.getUTCHours() + parseInt(timezone)
+  let dateObj = date
+  if (h >= 24) {
+    dateObj = new Date(date.valueOf() + 86400000)
+  } else if (h < 0) {
+    dateObj = new Date(date.valueOf() - 86400000)
+  }
+  const Y = dateObj.getUTCFullYear()
+  const M = dateObj.getUTCMonth() + 1
+  const D = dateObj.getUTCDate()
+  return format.replace('YYYY', Y).replace('MM', M < 10 ? '0' + M : M).replace('DD', D < 10 ? '0' + D : D).replace('M', M).replace('D', D)
+}
+
+function dateToTimeString(date, format = 'hh:mm:ss') {
+  let h = date.getUTCHours() + parseInt(timezone)
+  const m = date.getUTCMinutes()
+  const s = date.getUTCSeconds()
+  if (h >= 24) {
+    h -= 24
+  } else if (h < 0) {
+    h += 24
+  }
+  return format.replace('hh', h < 10 ? '0' + h : h).replace('mm', m < 10 ? '0' + m : m).replace('ss', s < 10 ? '0' + s : s).replace('h', h).replace('m', m).replace('s', s)
 }
 
 function formatStats(stats, colorful) {
   const reg = /§./g
   let str = `§l========== 基础 ==========§r
-最后在线时间: ${(new Date(stats.lastOnline)).toLocaleString()}
+最后在线时间: ${dateToString(new Date(stats.lastOnline))}
 游玩时间: ${secToTime(stats.playTime)}
 登录天数: ${stats.loginDays}
 破坏方块: ${stats.destroyed}
@@ -421,8 +453,9 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
   return colorful ? str : str.replace(reg, '')
 }
 
+// 更新最后在线时间
 function updateLastOnline(name) {
-  if (new Date(db.get(name, 'lastOnline')).toLocaleDateString('zh-CN') < new Date().toLocaleDateString('zh-CN')) {
+  if (dateToDateString(new Date(db.get(name, 'lastOnline'))) < dateToDateString(new Date())) {
     db.set(name, 'loginDays', 'add', 1)
   }
   db.set(name, 'lastOnline', 'set', Date.now())
@@ -444,6 +477,7 @@ mc.listen('onLeft', (player) => {
   clearInterval(player.getExtraData('playTimeTimer'))
   player.delExtraData('playTimeTimer')
   updateLastOnline(player.realName)
+  db.unmountPlayer(player.realName)
 })
 
 // 死亡
@@ -661,113 +695,179 @@ mc.listen('onSneak', (player, isSneaking) => {
 })
 
 // ==============================================================================================
-class DataBase {
-  playerDataTemplate
-  placedBlocks
-  kvdb
 
-  constructor(str, playerDataTemplate, placedBlocksSaveInterval) {
-    this.playerDataTemplate = playerDataTemplate
-    Object.freeze(this.playerDataTemplate)
-    this.kvdb = new KVDatabase(str)
-    if (!this.kvdb) {
-      this.readErr()
+class DataBase {
+  #kvdb
+  #db
+  #databaseSaveInterval
+  #playerDataTemplate
+  #placedBlocks
+  #dbPath
+  #backupFlag
+  #mountQueue
+  #unmountQueue
+  #backupLocation
+
+  #saveTimer
+
+  constructor(dbPath, playerDataTemplate, databaseSaveInterval, backupLocation) {
+    this.#databaseSaveInterval = databaseSaveInterval
+    this.#backupFlag = false
+    this.#playerDataTemplate = playerDataTemplate
+    this.#dbPath = dbPath
+    this.#kvdb = new KVDatabase(dbPath)
+    this.#db = new Map()
+    this.#mountQueue = []
+    this.#unmountQueue = []
+    this.#backupLocation = backupLocation
+    if (!this.#kvdb) {
       return null
     }
-    if (!this.kvdb.get('data')) {
-      this.kvdb.set('data', {
+    if (!this.#kvdb.get('data')) {
+      this.#kvdb.set('data', {
         lastUpdate: Date.now(),
         placedBlocks: []
       })
     } else {
-      if (this.kvdb.get('data').lastUpdate > Date.now()) {
-        this.timeErr(this.kvdb.get('data').lastUpdate)
+      if (this.#kvdb.get('data').lastUpdate > Date.now()) {
+        this.#timeErr(this.#kvdb.get('data').lastUpdate)
         return null
       }
     }
-    this.placedBlocks = new Set(this.kvdb.get('data').placedBlocks)
-    setInterval(() => {
-      this.savePlacedBlocks()
-    }, placedBlocksSaveInterval)
+    this.#placedBlocks = new Set(this.#kvdb.get('data').placedBlocks)
+    this.#createSaveTimer()
   }
 
-  readErr() {
-    logger.error('打开数据库文件失败')
+  #createSaveTimer() {
+    this.#saveTimer = setInterval(() => {
+      this.#dbSaveAll
+    }, this.#databaseSaveInterval)
   }
 
-  writeErr() {
-    logger.error('写入数据库文件失败')
+  #clearSaveTimer() {
+    clearInterval(this.#saveTimer)
   }
 
-  timeErr(time) {
+  #timeErr(time) {
     logger.error(`数据库最后更新时间为${new Date(time).toLocaleString}，晚于当前系统时间${new Date().toLocaleString}，请更新系统时间后重试`)
   }
 
-  dbUpdateTime() {
-    let data = this.kvdb.get('data')
+  // 更新保存时间
+  #dbUpdateTime() {
+    let data = this.#kvdb.get('data')
     data.lastUpdate = Date.now()
-    this.kvdb.set('data', data)
+    this.#kvdb.set('data', data)
   }
 
-  dataAssign(obj1, obj2) {
+  // 数据载入内存
+  #dbMount(name) {
+    if (this.#backupFlag) {
+      this.#mountQueue.push(name)
+      this.#db.set(name, this.#playerDataTemplate)
+    } else {
+      this.#db.set(name, this.#cleanData(this.#kvdb.get(name)))
+    }
+  }
+
+  // 保存并从内存中卸载
+  #dbUnmount(name) {
+    if (this.#backupFlag) {
+      this.#unmountQueue.push(name)
+    } else {
+      this.#kvdb.set(name, this.#db.get(name))
+      this.#db.delete(name)
+      this.#dbUpdateTime()
+    }
+  }
+
+  // 保存所有内存中的数据(包括放置方块数据)
+  #dbSaveAll() {
+    for (let [key, value] of this.#db) {
+      this.#kvdb.set(key, value)
+    }
+    let data = this.#kvdb.get('data')
+    data.placedBlocks = Array.from(this.#placedBlocks)
+    data.lastUpdate = Date.now()
+    this.#kvdb.set('data', data)
+  }
+
+  // 保存并卸载所有内存中的数据
+  #dbUnmountAll() {
+    for (let [key, value] of this.#db) {
+      this.#kvdb.set(key, value)
+      this.#db.delete(key)
+    }
+    this.#dbUpdateTime()
+  }
+
+  // 数据合并
+  #dataAssign(obj1, obj2) {
     let assignedObj = {}
     Object.keys(obj1).forEach(key => {
       if (typeof obj1[key] === 'object' && obj2?.hasOwnProperty(key)) {
-        assignedObj[key] = this.dataAssign(obj1[key], obj2[key])
+        assignedObj[key] = this.#dataAssign(obj1[key], obj2[key])
       } else if (obj2?.hasOwnProperty(key)) {
-        assignedObj[key] = obj2[key]
+        assignedObj[key] = obj1[key] + obj2[key]
       } else {
         assignedObj[key] = obj1[key]
       }
     })
+    if (obj2?.hasOwnProperty('lastOnline')) {
+      assignedObj.lastOnline = obj2.lastOnline
+    }
     return assignedObj
   }
 
   // 洗数据
-  cleanData(playerData) {
-    return this.dataAssign(this.playerDataTemplate, playerData)
+  #cleanData(playerData) {
+    return this.#dataAssign(this.#playerDataTemplate, playerData)
   }
 
   // 获取方块放置记录
   getPlacedBlocks() {
-    return this.placedBlocks
+    return this.#placedBlocks
   }
 
   // 设置新的方块放置记录
   addPlacedBlock(intPos) {
-    return this.placedBlocks.add([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
+    return this.#placedBlocks.add([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
+  // 删除方块放置记录
   deletePlacedBlock(intPos) {
-    return this.placedBlocks.delete([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
+    return this.#placedBlocks.delete([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
   // 查询是否存在方块放置记录
   hasPlacedBlock(intPos) {
-    return this.placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
-  }
-
-  // 保存方块放置记录
-  savePlacedBlocks() {
-    let data = this.kvdb.get('data')
-    data.placedBlocks = Array.from(this.placedBlocks)
-    data.lastUpdate = Date.now()
-    this.kvdb.set('data', data)
+    return this.#placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
   // 获取玩家某一项统计
   get(name, key) {
-    return this.cleanData(this.kvdb.get(name))[key]
+    if (this.#db.has(name)) {
+      return this.#db.get(name)[key]
+    } else {
+      return this.#cleanData(this.#kvdb.get(name))[key]
+    }
   }
 
   // 获取玩家某一子项统计
   getSub(name, key, subKey) {
-    return this.cleanData(this.kvdb.get(name)).subStats[key][subKey]
+    if (this.#db.has(name)) {
+      return this.#db.get(name).subStats[key][subKey]
+    } else {
+      return this.#cleanData(this.#kvdb.get(name)).subStats[key][subKey]
+    }
   }
 
   // 获取玩家所有统计
   getPlayer(name) {
-    return this.cleanData(this.kvdb.get(name))
+    if (this.#db.has(name)) {
+      return this.#db.get(name)
+    } else {
+      return this.#cleanData(this.#kvdb.get(name))
+    }
   }
 
   // 获取某一项的排行
@@ -809,27 +909,19 @@ class DataBase {
       }
       return items
     }
-    let names = this.kvdb.listKey()
+    let names = Array.from(new Set([...this.#kvdb.listKey(), ...this.#db.keys()]))
     let ranking = []
     for (let i = 0; i < names.length; i++) {
       if (names[i] !== 'data') {
-        ranking.push({ name: names[i], data: this.kvdb.get(names[i])[key] })
+        ranking.push({ name: names[i], data: this.getPlayer(names[i])[key] })
       }
     }
-
     return sort(ranking)
   }
 
   // 设置玩家某一项统计
   set(name, key, operator, value) {
-    const playerData = this.kvdb.get(name)
-    if (!playerData?.hasOwnProperty(key)) {
-      if (!this.kvdb.set(name, this.cleanData(playerData))) {
-        this.writeErr()
-        return false
-      }
-      return this.set(name, key, operator, value)
-    }
+    let playerData = this.getPlayer(name)
     switch (operator) {
       case 'set':
         playerData[key] = value
@@ -843,24 +935,13 @@ class DataBase {
       default:
         return false
     }
-    if (!this.kvdb.set(name, this.cleanData(playerData))) {
-      this.writeErr()
-      return false
-    }
-    this.dbUpdateTime()
+    this.#db.set(name, playerData)
     return true
   }
 
   // 设置某一子项统计
   setSub(name, key, subKey, operator, value) {
-    const playerData = this.getPlayer(name)
-    if (!playerData?.subStats?.[key]?.hasOwnProperty(subKey)) {
-      if (!this.kvdb.set(name, this.cleanData(playerData))) {
-        this.writeErr()
-        return false
-      }
-      return this.set(name, key, subKey, operator, value)
-    }
+    let playerData = this.getPlayer(name)
     switch (operator) {
       case 'set':
         playerData.subStats[key][subKey] = value
@@ -874,31 +955,61 @@ class DataBase {
       default:
         return false
     }
-    if (!this.kvdb.set(name, this.cleanData(playerData))) {
-      this.writeErr()
-      return false
-    }
-    this.dbUpdateTime()
+    this.#db.set(name, playerData)
     return true
   }
 
   // 设置玩家所有统计
   setPlayer(name, playerData) {
-    if (!this.kvdb.set(name, this.cleanData(playerData))) {
-      this.writeErr()
-      return false
-    }
-    this.dbUpdateTime()
+    this.#db.set(name, playerData)
     return true
   }
 
   // 删除某个玩家统计信息
   deletePlayer(name) {
-    if (!this.kvdb.delete(name)) {
-      this.writeErr()
-      return false
-    }
-    this.dbUpdateTime()
+    this.#db.delete(name)
+    this.#kvdb.delete(name)
+    this.#dbUpdateTime()
     return true
+  }
+
+  // 内存中卸载玩家数据
+  unmountPlayer(name) {
+    this.#dbUnmount(name)
+  }
+
+  // 数据库热备份
+  dbBackup() {
+    this.#clearSaveTimer()
+    this.#backupFlag = true
+    this.#dbSaveAll()
+    this.#kvdb.close()
+
+    let success = false
+    const timeObj = system.getTimeObj()
+    const path = [this.#backupLocation, '/', timeObj.Y, '-', timeObj.M, '-', timeObj.D, ' ', timeObj.h, '.', timeObj.m, '.', timeObj.s].join('')
+    if (File.exists(path)) {
+      success = false
+    } else {
+      if (!File.mkdir(path)) {
+        success = false
+      } else {
+        if (File.copy(this.#dbPath, path)) {
+          success = true
+        } else {
+          success = false
+        }
+      }
+    }
+    this.#kvdb = new KVDatabase(this.#dbPath)
+    this.#backupFlag = false
+    while (this.#mountQueue.length !== 0) {
+      this.#dbMount(this.#mountQueue.shift())
+    }
+    while (this.#unmountQueue.length !== 0) {
+      this.#dbUnmount(this.#unmountQueue.shift())
+    }
+    this.#createSaveTimer()
+    return success
   }
 }

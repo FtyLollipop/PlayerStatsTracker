@@ -1,4 +1,6 @@
 {
-    "playTimeInterval": 10,
+    "timezone": 8,
+    "backupLocation": "",
+    "playTimeInterval": 1,
     "placedBlocksSaveInterval": 10000
 }
