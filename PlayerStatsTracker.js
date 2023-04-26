@@ -149,7 +149,6 @@ const rankingKeys = [
       { text: '破坏方块', key: 'destroyed' },
       { text: '放置方块', key: 'placed' },
       { text: '跳跃', key: 'jumped' },
-      { text: '行走距离', key: 'distanceWalked' },
       { text: '消耗的不死图腾', key: 'totem' },
       { text: '聊天数', key: 'chat' },
       { text: '聊天字符数', key: 'chatChars' },
@@ -190,7 +189,7 @@ command1.setCallback((cmd, origin, output, results) => {
   if (!origin.player) { // 控制台查询
     if (results.player) { // 控制台有参数
       if (db.hasPlayer(results.player)) {
-        output.success(`${results.player}的统计\n${formatStats(db.getPlayer(results.playerName), false)}`)
+        output.success(`${results.player}的统计\n${formatStats(db.getPlayer(results.player), false)}`)
       } else {
         output.error('无此玩家数据')
       }
@@ -242,7 +241,7 @@ command3.setCallback((cmd, origin, output, results) => {
   if (origin.player) {
     showRanking(origin.player)
   } else {
-    if (!results.number) {
+    if (results.number === null) {
       let keysStr = ''
       for (let i = 0; i < rankingKeyList.length; i++) {
         keysStr += `\n${i}. ${rankingKeyList[i].text}`
@@ -250,7 +249,7 @@ command3.setCallback((cmd, origin, output, results) => {
       output.success('请使用"ranking <编号>"来查询某一项统计数据的排行榜' + keysStr)
     } else {
       if (rankingKeyList.length - 1 > results.number) {
-        if (rankingKeyList[results.number].key === 'onlineTime') {
+        if (rankingKeyList[results.number].key === 'playTime') {
           output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)}`)
         } else {
           output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false)}`)
@@ -304,7 +303,7 @@ function getStats(name) {
 }
 
 function getFormatedRanking(key) {
-  if (key === 'onlineTime') {
+  if (key === 'playTime') {
     return formatRanking(db.getRanking(key), false, secToTime)
   } else {
     return formatRanking(db.getRanking(key), false)
@@ -432,8 +431,6 @@ function formatStats(stats, colorful) {
 破坏方块: ${stats.destroyed}
 放置方块: ${stats.placed}
 跳跃: ${stats.jumped}
-行走距离: ${stats.distanceWalked}
-飞行距离: ${stats.distanceFlown}
 消耗的不死图腾: ${stats.totem}
 聊天数: ${stats.chat}
 聊天字符数: ${stats.chatChars}
@@ -531,8 +528,9 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
   return colorful ? str : str.replace(reg, '')
 }
 
-// 更新最后在线时间
-function updateLastOnline(name) {
+// 更新游玩时间、最后在线时间、登录天数
+function updatePlayTime(name) {
+  db.set(name, 'playTime', 'add', 1)
   if (dateToDateString(new Date(db.get(name, 'lastOnline'))) < dateToDateString(new Date())) {
     db.set(name, 'loginDays', 'add', 1)
   }
@@ -542,11 +540,10 @@ function updateLastOnline(name) {
 // 进入游戏
 mc.listen('onJoin', (player) => {
   if (player.isSimulatedPlayer()) { return }
-  updateLastOnline(player.realName)
+  db.set(name, 'lastOnline', 'set', Date.now())
   player.setExtraData('playTimeTimer', setInterval(() => {
-    db.set(player.realName, 'playTime', 'add', playTimeInterval)
-    updateLastOnline(player.realName)
-  }, playTimeInterval * 1000))
+    updatePlayTime(player.realName)
+  }, 1000))
 })
 
 // 离开游戏
@@ -554,7 +551,6 @@ mc.listen('onLeft', (player) => {
   if (player.isSimulatedPlayer()) { return }
   clearInterval(player.getExtraData('playTimeTimer'))
   player.delExtraData('playTimeTimer')
-  updateLastOnline(player.realName)
   db.unmountPlayer(player.realName)
 })
 
