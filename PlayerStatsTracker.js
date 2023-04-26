@@ -511,18 +511,21 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
       count = 0
     }
     prev = ranking[i].data
+    if(i !== 0) {
+      str +='\n'
+    }
     switch (rank) {
       case 1:
         str += `§g§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       case 2:
-        str += `\n§7§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
+        str += `§7§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       case 3:
-        str += `\n§6§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
+        str += `§6§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
       default:
-        str += `\n${rank}. ${ranking[i].name}: ${func(ranking[i].data)}`
+        str += `${rank}. ${ranking[i].name}: ${func(ranking[i].data)}`
     }
   }
   return colorful ? str : str.replace(reg, '')
@@ -567,7 +570,7 @@ mc.listen('onMobDie', (mob, source, cause) => {
     if (!pl.isSimulatedPlayer()) {
       db.set(pl.realName, 'killed', 'add', 1)
       if (defaultPlayerData.subStats.killed.hasOwnProperty(mob.type)) {
-        db.setSub(player.realName, 'killed', mob.type, 'add', 1)
+        db.setSub(pl.realName, 'killed', mob.type, 'add', 1)
       }
     }
   }
