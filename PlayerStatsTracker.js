@@ -1,3 +1,5 @@
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
+
 const defaultConfig = {
   timezone: 8,
   backupLocation: './plugins/PlayerStatsTracker/backups',
@@ -139,34 +141,78 @@ const preFarmlandBlocks = [
   'minecraft:grass_path'
 ]
 
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
+const rankingKeys = [
+  {
+    text: '§0基础信息', keys: [
+      { text: '游玩时间', key: 'playTime' },
+      { text: '登录天数', key: 'loginDays' },
+      { text: '破坏方块', key: 'destroyed' },
+      { text: '放置方块', key: 'placed' },
+      { text: '跳跃', key: 'jumped' },
+      { text: '行走距离', key: 'distanceWalked' },
+      { text: '消耗的不死图腾', key: 'totem' },
+      { text: '聊天数', key: 'chat' },
+      { text: '聊天字符数', key: 'chatChars' },
+      { text: '累计经验', key: 'expObtained' },
+      { text: '最高等级', key: 'highestLevel' },
+      { text: '吃掉食物', key: 'ate' }
+    ]
+  },
+  {
+    text: '§c战斗', keys: [
+      { text: '击杀', key: 'killed' },
+      { text: '死亡', key: 'death' },
+      { text: '累计造成伤害', key: 'damageDealt' },
+      { text: '累计受到伤害', key: 'damageTaken' }
+    ]
+  },
+  {
+    text: '§8挖矿', keys: [
+      { text: '主世界挖矿', key: 'overworldMined' },
+      { text: '下界挖矿', key: 'netherMined' }
+    ]
+  },
+  {
+    text: '§2种植', keys: [
+      { text: '耕地', key: 'tilled' },
+      { text: '种植', key: 'planted' },
+      { text: '收获', key: 'harvested' }
+    ]
+  }
+]
+
+let rankingKeyList = []
 
 let command1 = mc.newCommand('stats', '查看统计信息', PermType.Any)
 command1.optional('player', ParamType.String)
 command1.overload(['player'])
 command1.setCallback((cmd, origin, output, results) => {
-  if (results.player) {
-    if (!origin.player) {
-      if (!data.name2xuid(results.player)) {
-        output.error('无此玩家')
+  if (!origin.player) { // 控制台查询
+    if (results.player) { // 控制台有参数
+      if (db.hasPlayer(results.player)) {
+        output.success(`${results.player}的统计\n${formatStats(db.getPlayer(results.playerName), false)}`)
       } else {
-        output.success(`${results.player}的统计\n${formatStats(db.getPlayer(results.player), false)}`)
+        output.error('无此玩家数据')
       }
-    } else {
-      if (origin.player.isOP() || results.player === origin.player.realName) {
-        if (!data.name2xuid(results.player)) {
-          output.error('无此玩家')
-        } else {
-          showStats(origin.player, results.player)
-        }
-      } else {
-        output.error('你无权查询其他玩家')
-      }
+    } else { // 控制台无参数
+      output.error('请指定玩家名')
     }
-  } else {
-    if (!origin.player) {
-      output.error('请指定玩家')
-    } else {
+  } else { // 玩家查询
+    if (results.player) { // 玩家有参数
+      if (origin.player.realName === results.player) { // 玩家有参数查自己
+        showStats(origin.player, origin.player.realName)
+      } else { // 玩家有参数查别人
+        if (origin.player.isOP()) {
+          if (db.hasPlayer(results.player)) {
+            showStats(origin.player, results.player)
+          } else {
+            output.error('无此玩家数据')
+          }
+        } else {
+          output.error('你无权查询其他玩家')
+        }
+      }
+    } else { // 玩家无参数
       showStats(origin.player, origin.player.realName)
     }
   }
@@ -190,12 +236,29 @@ command2.setCallback((cmd, origin, output, results) => {
 command2.setup()
 
 let command3 = mc.newCommand('ranking', '查看统计排行榜', PermType.Any)
-command3.overload([])
+command3.optional('number', ParamType.Int)
+command3.overload(['number'])
 command3.setCallback((cmd, origin, output, results) => {
   if (origin.player) {
-    showRanking(origin.player, '1')
+    showRanking(origin.player)
   } else {
-
+    if (!results.number) {
+      let keysStr = ''
+      for (let i = 0; i < rankingKeyList.length; i++) {
+        keysStr += `\n${i}. ${rankingKeyList[i].text}`
+      }
+      output.success('请使用"ranking <编号>"来查询某一项统计数据的排行榜' + keysStr)
+    } else {
+      if (rankingKeyList.length - 1 > results.number) {
+        if (rankingKeyList[results.number].key === 'onlineTime') {
+          output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)}`)
+        } else {
+          output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false)}`)
+        }
+      } else {
+        output.error('无此编号的排行榜')
+      }
+    }
   }
 })
 command3.setup()
@@ -216,7 +279,62 @@ let newFarmlands = new Set()
 // 服务器启动
 mc.listen('onServerStarted', () => {
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
+  buildRankingKeyList()
 })
+
+// ↓ API ======================================================================
+ll.exports(getStats, 'PlayerStatsTracker', 'getStats')
+ll.exports(getFormatedStats, 'PlayerStatsTracker', 'getFormatedStats')
+ll.exports(getRanking, 'PlayerStatsTracker', 'getRanking')
+ll.exports(getFormatedRanking, 'PlayerStatsTracker', 'getFormatedRanking')
+ll.exports(getRankingKeyList, 'PlayerStatsTracker', 'getRankingKeyList')
+
+function getFormatedStats(name) {
+  if (!db.hasPlayer(name)) {
+    return null
+  }
+  return formatStats(db.getPlayer(name), false)
+}
+
+function getStats(name) {
+  if (!db.hasPlayer(name)) {
+    return null
+  }
+  return db.getPlayer(name)
+}
+
+function getFormatedRanking(key) {
+  if (key === 'onlineTime') {
+    return formatRanking(db.getRanking(key), false, secToTime)
+  } else {
+    return formatRanking(db.getRanking(key), false)
+  }
+}
+
+function getRanking(key) {
+
+  return db.getRanking(key)
+}
+
+function getRankingKeyList() {
+  return rankingKeyList
+}
+
+function hasRankingKey(key) {
+  for (let i = 0; i < rankingKeyList.length; i++) {
+    if (rankingKeyList[i].key === key) {
+      return true
+    }
+  }
+  return false
+}
+// ↑ API ======================================================================
+
+function buildRankingKeyList() {
+  for (let i = 0; i < rankingKeys.length; i++) {
+    rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
+  }
+}
 
 function showStats(player, name) {
   const easterEgg = '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n害翻，害翻，真以为你有那么多事值得统计啊？'
@@ -227,53 +345,13 @@ function showStats(player, name) {
   })
 }
 
-function showRanking(player, key) {
-  const rankingButtons = [
-    {
-      text: '§0基础信息', subButtons: [
-        { text: '游玩时间', key: 'playTime' },
-        { text: '登录天数', key: 'loginDays' },
-        { text: '破坏方块', key: 'destroyed' },
-        { text: '放置方块', key: 'placed' },
-        { text: '跳跃', key: 'jumped' },
-        { text: '行走距离', key: 'distanceWalked' },
-        { text: '消耗的不死图腾', key: 'totem' },
-        { text: '聊天数', key: 'chat' },
-        { text: '聊天字符数', key: 'chatChars' },
-        { text: '累计经验', key: 'expObtained' },
-        { text: '最高等级', key: 'highestLevel' },
-        { text: '吃掉食物', key: 'ate' }
-      ]
-    },
-    {
-      text: '§c战斗', subButtons: [
-        { text: '击杀', key: 'killed' },
-        { text: '死亡', key: 'death' },
-        { text: '累计造成伤害', key: 'damageDealt' },
-        { text: '累计受到伤害', key: 'damageTaken' }
-      ]
-    },
-    {
-      text: '§8挖矿', subButtons: [
-        { text: '主世界挖矿', key: 'overworldMined' },
-        { text: '下界挖矿', key: 'netherMined' }
-      ]
-    },
-    {
-      text: '§2种植', subButtons: [
-        { text: '耕地', key: 'tilled' },
-        { text: '种植', key: 'planted' },
-        { text: '收获', key: 'harvested' }
-      ]
-    }
-  ]
-
+function showRanking(player) {
   let optionsForm = mc.newSimpleForm()
   let subOptionsForm = null
   let subOptionsFormId = -1
   optionsForm.setTitle('统计排行榜')
-  for (let i = 0; i < rankingButtons.length; i++) {
-    optionsForm.addButton(rankingButtons[i].text)
+  for (let i = 0; i < rankingKeys.length; i++) {
+    optionsForm.addButton(rankingKeys[i].text)
   }
   player.sendForm(optionsForm, optionsFormHandler)
 
@@ -281,9 +359,9 @@ function showRanking(player, key) {
     if (id == null) { return }
     subOptionsFormId = id
     subOptionsForm = mc.newSimpleForm()
-    subOptionsForm.setTitle('统计排行榜-' + rankingButtons[id].text)
-    for (let i = 0; i < rankingButtons[id].subButtons.length; i++) {
-      subOptionsForm.addButton(rankingButtons[id].subButtons[i].text)
+    subOptionsForm.setTitle('统计排行榜-' + rankingKeys[id].text)
+    for (let i = 0; i < rankingKeys[id].keys.length; i++) {
+      subOptionsForm.addButton(rankingKeys[id].keys[i].text)
     }
     player.sendForm(subOptionsForm, subOptionsFormHandler)
   }
@@ -293,11 +371,11 @@ function showRanking(player, key) {
       player.sendForm(optionsForm, optionsFormHandler)
     } else {
       let rankingForm = mc.newSimpleForm()
-      rankingForm.setTitle('统计排行榜-' + rankingButtons[subOptionsFormId].subButtons[id].text)
-      if (rankingButtons[subOptionsFormId].subButtons[id].key === 'playTime') {
-        rankingForm.setContent(formatRanking(db.getRanking(rankingButtons[subOptionsFormId].subButtons[id].key), true, secToTime))
+      rankingForm.setTitle('统计排行榜-' + rankingKeys[subOptionsFormId].keys[id].text)
+      if (rankingKeys[subOptionsFormId].keys[id].key === 'playTime') {
+        rankingForm.setContent(formatRanking(db.getRanking(rankingKeys[subOptionsFormId].keys[id].key), true, secToTime))
       } else {
-        rankingForm.setContent(formatRanking(db.getRanking(rankingButtons[subOptionsFormId].subButtons[id].key), true))
+        rankingForm.setContent(formatRanking(db.getRanking(rankingKeys[subOptionsFormId].keys[id].key), true))
       }
       player.sendForm(rankingForm, rankingFormHandler)
     }
@@ -740,7 +818,7 @@ class DataBase {
 
   #createSaveTimer() {
     this.#saveTimer = setInterval(() => {
-      this.#dbSaveAll
+      this.#dbSaveAll()
     }, this.#databaseSaveInterval)
   }
 
@@ -749,7 +827,7 @@ class DataBase {
   }
 
   #timeErr(time) {
-    logger.error(`数据库最后更新时间为${new Date(time).toLocaleString}，晚于当前系统时间${new Date().toLocaleString}，请更新系统时间后重试`)
+    logger.error(`数据库最后更新时间为${new Date(time).toLocaleString()}，晚于当前系统时间${new Date().toLocaleString()}，请更新系统时间后重试`)
   }
 
   // 更新保存时间
@@ -843,6 +921,12 @@ class DataBase {
     return this.#placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
+  // 查询是否有该玩家的数据
+  hasPlayer(name) {
+    const names = new Set([...this.#kvdb.listKey(), ...this.#db.keys()])
+    return names.has(name)
+  }
+
   // 获取玩家某一项统计
   get(name, key) {
     if (this.#db.has(name)) {
@@ -909,7 +993,7 @@ class DataBase {
       }
       return items
     }
-    let names = Array.from(new Set([...this.#kvdb.listKey(), ...this.#db.keys()]))
+    const names = Array.from(new Set([...this.#kvdb.listKey(), ...this.#db.keys()]))
     let ranking = []
     for (let i = 0; i < names.length; i++) {
       if (names[i] !== 'data') {
