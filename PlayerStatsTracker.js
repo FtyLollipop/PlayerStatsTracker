@@ -543,7 +543,7 @@ function updatePlayTime(name) {
 // 进入游戏
 mc.listen('onJoin', (player) => {
   if (player.isSimulatedPlayer()) { return }
-  db.set(name, 'lastOnline', 'set', Date.now())
+  db.set(player.realName, 'lastOnline', 'set', Date.now())
   player.setExtraData('playTimeTimer', setInterval(() => {
     updatePlayTime(player.realName)
   }, 1000))
