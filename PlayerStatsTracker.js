@@ -769,6 +769,11 @@ mc.listen('onSneak', (player, isSneaking) => {
 
 })
 
+// 钓鱼
+mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
+
+})
+
 // ==============================================================================================
 
 class DataBase {
