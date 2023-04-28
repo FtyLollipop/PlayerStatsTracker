@@ -3,14 +3,12 @@ ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 const defaultConfig = {
   timezone: 8,
   backupLocation: './plugins/PlayerStatsTracker/backups',
-  playTimeInterval: 1,
   databaseSaveInterval: 10000
 }
 
 const config = new JsonConfigFile('./plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig))
 const timezone = config.get('timezone') || defaultConfig.timezone
 const backupLocation = config.get('backupLocation') || defaultConfig.backupLocation
-const playTimeInterval = Math.floor(config.get('playTimeInterval')) || defaultConfig.playTimeInterval
 const databaseSaveInterval = Math.floor(config.get('databaseSaveInterval')) || defaultConfig.databaseSaveInterval
 
 const defaultPlayerData = {
@@ -531,9 +529,8 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
   return colorful ? str : str.replace(reg, '')
 }
 
-// 更新游玩时间、最后在线时间、登录天数
-function updatePlayTime(name) {
-  db.set(name, 'playTime', 'add', 1)
+// 更新最后在线时间和登录天数
+function updateLastOnline(name) {
   if (dateToDateString(new Date(db.get(name, 'lastOnline'))) < dateToDateString(new Date())) {
     db.set(name, 'loginDays', 'add', 1)
   }
@@ -543,9 +540,10 @@ function updatePlayTime(name) {
 // 进入游戏
 mc.listen('onJoin', (player) => {
   if (player.isSimulatedPlayer()) { return }
-  db.set(player.realName, 'lastOnline', 'set', Date.now())
+  updateLastOnline(player.realName)
   player.setExtraData('playTimeTimer', setInterval(() => {
-    updatePlayTime(player.realName)
+    db.set(player.realName, 'playTime', 'add', 1)
+    updateLastOnline()
   }, 1000))
 })
 
