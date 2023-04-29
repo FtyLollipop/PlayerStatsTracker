@@ -23,6 +23,8 @@ const defaultPlayerData = {
   harvested: 0, // 收获次数
   overworldMined: 0, // 主世界挖矿数
   netherMined: 0, // 下界挖矿数
+  fished: 0, // 钓鱼数
+  hooked: 0, // 用钓鱼竿钩实体次数
   ate: 0, // 吃掉的食物数
   totem: 0, // 消耗的图腾数
   chat: 0, // 聊天消息条数
@@ -38,14 +40,24 @@ const defaultPlayerData = {
   distanceMoved: 0, // 移动距离
   subStats: {
     ate: { // 具体吃掉的食物数
-      "minecraft:golden_apple": 0,
-      "minecraft:enchanted_golden_apple": 0
+      'minecraft:golden_apple': 0,
+      'minecraft:enchanted_golden_apple': 0
     },
     killed: { // 具体击杀数
-      "minecraft:horse": 0,
-      "minecraft:donkey": 0,
-      "minecraft:mule": 0,
-      "minecraft:wandering_trader": 0
+      'minecraft:horse': 0,
+      'minecraft:donkey': 0,
+      'minecraft:mule': 0,
+      'minecraft:wandering_trader': 0,
+      'minecraft:trader_llama': 0,
+      'minecraft:iron_golem': 0,
+      'minecraft:warden': 0,
+      'minecraft:wither': 0,
+      'minecraft:ender_dragon': 0,
+    },
+    fished: { // 具体钓鱼数
+      'fish': 0,
+      'junk': 0,
+      'treasure': 0
     },
     planted: { // 具体种植数
       'minecraft:wheat': 0,
@@ -139,9 +151,56 @@ const preFarmlandBlocks = [
   'minecraft:grass_path'
 ]
 
+const cakes = [
+  'minecraft:cake',
+  'minecraft:candle_cake',
+  'minecraft:white_candle_cake',
+  'minecraft:orange_candle_cake',
+  'minecraft:magenta_candle_cake',
+  'minecraft:light_blue_candle_cake',
+  'minecraft:yellow_candle_cake',
+  'minecraft:lime_candle_cake',
+  'minecraft:pink_candle_cake',
+  'minecraft:gray_candle_cake',
+  'minecraft:light_gray_candle_cake',
+  'minecraft:cyan_candle_cake',
+  'minecraft:purple_candle_cake',
+  'minecraft:blue_candle_cake',
+  'minecraft:brown_candle_cake',
+  'minecraft:green_candle_cake',
+  'minecraft:red_candle_cake',
+  'minecraft:black_candle_cake'
+]
+
+let fishingLootTable = {}
+
+{
+  let fish = new Set([
+    ...data.parseJson(File.readFrom('./behavior_packs/vanilla/loot_tables/gameplay/fishing/fish.json')).pools[0].entries.map(obj => obj.name),
+    ...data.parseJson(File.readFrom('./behavior_packs/vanilla/loot_tables/gameplay/fishing/jungle_fish.json')).pools[0].entries.map(obj => obj.name)
+  ])
+  fish.delete('minecraft:fish')
+  fish.add('minecraft:cod')
+  let junk = new Set([
+    ...data.parseJson(File.readFrom('./behavior_packs/vanilla/loot_tables/gameplay/fishing/junk.json')).pools[0].entries.map(obj => obj.name),
+    ...data.parseJson(File.readFrom('./behavior_packs/vanilla/loot_tables/gameplay/fishing/jungle_junk.json')).pools[0].entries.map(obj => obj.name)
+  ])
+  junk.delete('minecraft:dye')
+  junk.add('minecraft:ink_sac')
+  let treasure = new Set(data.parseJson(File.readFrom('./behavior_packs/vanilla/loot_tables/gameplay/fishing/treasure.json')).pools[0].entries.map(obj => obj.name))
+  treasure.delete('minecraft:book')
+  treasure.add('minecraft:enchanted_book')
+
+  fishingLootTable = {
+    fish: Array.from(fish),
+    junk: Array.from(junk),
+    treasure: Array.from(treasure)
+  }
+}
+
 const rankingKeys = [
   {
-    text: '§0基础信息', keys: [
+    text: '§0基础信息§r', keys: [
       { text: '游玩时间', key: 'playTime' },
       { text: '登录天数', key: 'loginDays' },
       { text: '破坏方块', key: 'destroyed' },
@@ -156,7 +215,7 @@ const rankingKeys = [
     ]
   },
   {
-    text: '§c战斗', keys: [
+    text: '§c战斗§r', keys: [
       { text: '击杀', key: 'killed' },
       { text: '死亡', key: 'death' },
       { text: '累计造成伤害', key: 'damageDealt' },
@@ -164,22 +223,41 @@ const rankingKeys = [
     ]
   },
   {
-    text: '§8挖矿', keys: [
+    text: '§8挖矿§r', keys: [
       { text: '主世界挖矿', key: 'overworldMined' },
       { text: '下界挖矿', key: 'netherMined' }
     ]
   },
   {
-    text: '§2种植', keys: [
+    text: '§2种植§r', keys: [
       { text: '耕地', key: 'tilled' },
       { text: '种植', key: 'planted' },
       { text: '收获', key: 'harvested' }
+    ]
+  },
+  {
+    text: '§3钓鱼§r', keys: [
+      { text: '钓鱼', key: 'fished' },
+      { text: '钩实体', key: 'hooked' }
     ]
   }
 ]
 
 let rankingKeyList = []
 
+for (let i = 0; i < rankingKeys.length; i++) {
+  rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
+}
+
+let db
+let newFarmlands = new Set()
+let cakesAten = new Set()
+// 服务器启动
+mc.listen('onServerStarted', () => {
+  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
+})
+
+// ↓ 命令注册 ======================================================================
 let command1 = mc.newCommand('stats', '查看统计信息', PermType.Any)
 command1.optional('player', ParamType.String)
 command1.overload(['player'])
@@ -270,14 +348,7 @@ command4.setCallback((cmd, origin, output, results) => {
   }
 })
 command4.setup()
-
-let db
-let newFarmlands = new Set()
-// 服务器启动
-mc.listen('onServerStarted', () => {
-  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
-  buildRankingKeyList()
-})
+// ↑ 命令注册 ======================================================================
 
 // ↓ API ======================================================================
 ll.exports(getStats, 'PlayerStatsTracker', 'getStats')
@@ -327,16 +398,11 @@ function hasRankingKey(key) {
 }
 // ↑ API ======================================================================
 
-function buildRankingKeyList() {
-  for (let i = 0; i < rankingKeys.length; i++) {
-    rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
-  }
-}
-
+// ↓ 游戏内菜单 ======================================================================
 function showStats(player, name) {
   const easterEgg = '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n害翻，害翻，真以为你有那么多事值得统计啊？'
   let form = mc.newSimpleForm()
-  form.setTitle(name + '的统计')
+  form.setTitle(`${name}的统计`)
   form.setContent(formatStats(db.getPlayer(name), true) + easterEgg)
   player.sendForm(form, () => {
   })
@@ -354,11 +420,12 @@ function showRanking(player) {
 
   function optionsFormHandler(player, id) {
     if (id == null) { return }
+    const keyItem = rankingKeys[id]
     subOptionsFormId = id
     subOptionsForm = mc.newSimpleForm()
-    subOptionsForm.setTitle('统计排行榜-' + rankingKeys[id].text)
-    for (let i = 0; i < rankingKeys[id].keys.length; i++) {
-      subOptionsForm.addButton(rankingKeys[id].keys[i].text)
+    subOptionsForm.setTitle('统计排行榜-' + keyItem.text)
+    for (let i = 0; i < keyItem.keys.length; i++) {
+      subOptionsForm.addButton(keyItem.keys[i].text)
     }
     player.sendForm(subOptionsForm, subOptionsFormHandler)
   }
@@ -367,12 +434,15 @@ function showRanking(player) {
     if (id == null) {
       player.sendForm(optionsForm, optionsFormHandler)
     } else {
+      const keyItem = rankingKeys[subOptionsFormId].keys[id]
       let rankingForm = mc.newSimpleForm()
-      rankingForm.setTitle('统计排行榜-' + rankingKeys[subOptionsFormId].keys[id].text)
-      if (rankingKeys[subOptionsFormId].keys[id].key === 'playTime') {
-        rankingForm.setContent(formatRanking(db.getRanking(rankingKeys[subOptionsFormId].keys[id].key), true, secToTime))
+      rankingForm.setTitle('统计排行榜-' + keyItem.text)
+      if (keyItem.key === 'playTime') {
+        rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true, secToTime))
+      } else if (keyItem.key === 'damageTaken' || keyItem.key === 'damageDealt') {
+        rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true, value => value.toFixed(2)))
       } else {
-        rankingForm.setContent(formatRanking(db.getRanking(rankingKeys[subOptionsFormId].keys[id].key), true))
+        rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true))
       }
       player.sendForm(rankingForm, rankingFormHandler)
     }
@@ -381,6 +451,12 @@ function showRanking(player) {
   function rankingFormHandler(player, data) {
     player.sendForm(subOptionsForm, subOptionsFormHandler)
   }
+}
+// ↑ 游戏内菜单 ======================================================================
+
+// ↓ Utils ======================================================================
+function posToString(pos) {
+  return [pos.x, ',', pos.y, ',', pos.z, ',', pos.dimid].join('')
 }
 
 function secToTime(sec) {
@@ -442,9 +518,14 @@ function formatStats(stats, colorful) {
 击杀: ${stats.killed}
   - 马属: ${stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule']}
   - 流浪商人: ${stats.subStats.killed['minecraft:wandering_trader']}
+  - 行商羊驼: ${stats.subStats.killed['minecraft:trader_llama']}
+  - 铁傀儡: ${stats.subStats.killed['minecraft:iron_golem']}
+  - 监守者: ${stats.subStats.killed['minecraft:warden']}
+  - 凋灵: ${stats.subStats.killed['minecraft:wither']}
+  - 末影龙: ${stats.subStats.killed['minecraft:ender_dragon']}
 死亡: ${stats.death}
-累计造成伤害: ${stats.damageDealt}
-累计受到伤害: ${stats.damageTaken}
+累计造成伤害: ${stats.damageDealt.toFixed(2)}
+累计受到伤害: ${stats.damageTaken.toFixed(2)}
 
 §7§l========== 挖矿 ==========§r
 主世界挖矿: ${stats.overworldMined}
@@ -492,11 +573,18 @@ function formatStats(stats, colorful) {
   - 火把花: ${stats.subStats.harvested['minecraft:torchflower_crop']}
   - 瓶子草: ${stats.subStats.harvested['minecraft:pitcher_crop']}
   - 可可果: ${stats.subStats.harvested['minecraft:cocoa']}
-  - 下界疣: ${stats.subStats.harvested['minecraft:nether_wart']}`
+  - 下界疣: ${stats.subStats.harvested['minecraft:nether_wart']}
+  
+§3§l========== 钓鱼 ==========§r
+钓鱼: ${stats.fished}
+  - 鱼: ${stats.subStats.fished['fish']}
+  - 宝藏: ${stats.subStats.fished['treasure']}
+  - 垃圾: ${stats.subStats.fished['junk']}
+钩实体: ${stats.hooked}`
   return colorful ? str : str.replace(reg, '')
 }
 
-function formatRanking(ranking, colorful, func = (str) => { return str }) {
+function formatRanking(ranking, colorful, func = str => str) {
   const reg = /§./g
   let str = ''
   let rank = 0
@@ -509,8 +597,8 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
       count = 0
     }
     prev = ranking[i].data
-    if(i !== 0) {
-      str +='\n'
+    if (i !== 0) {
+      str += '\n'
     }
     switch (rank) {
       case 1:
@@ -528,6 +616,7 @@ function formatRanking(ranking, colorful, func = (str) => { return str }) {
   }
   return colorful ? str : str.replace(reg, '')
 }
+// ↑ Utils ======================================================================
 
 // 更新最后在线时间和登录天数
 function updateLastOnline(name) {
@@ -543,7 +632,7 @@ mc.listen('onJoin', (player) => {
   updateLastOnline(player.realName)
   player.setExtraData('playTimeTimer', setInterval(() => {
     db.set(player.realName, 'playTime', 'add', 1)
-    updateLastOnline()
+    updateLastOnline(player.realName)
   }, 1000))
 })
 
@@ -650,12 +739,20 @@ mc.listen('onUseItemOn', (player, item, block, side, pos) => {
     'minecraft:golden_hoe',
     'minecraft:netherite_hoe'
   ]
-  if (hoes.includes(item.type) && preFarmlandBlocks.includes(block.type)) {
-    const blockPosStr = [block.pos.x, ',', block.pos.y, ',', block.pos.z, ',', block.pos.dimid].join('')
+  if (preFarmlandBlocks.includes(block.type) && hoes.includes(item.type)) {
+    const blockPosStr = posToString(block.pos)
     setTimeout(() => {
       if (newFarmlands.has(blockPosStr)) {
         newFarmlands.delete(blockPosStr)
         db.set(player.realName, 'tilled', 'add', 1)
+      }
+    }, 5)
+  } else if (cakes.includes(block.type)) {
+    const blockPosStateStr = posToString(block.pos) + block.getBlockState()?.['bite_counter']
+    setTimeout(() => {
+      if (cakesAten.has(blockPosStateStr)) {
+        cakesAten.delete(blockPosStateStr)
+        db.set(player.realName, 'ate', 'add', 1)
       }
     }, 5)
   }
@@ -670,10 +767,16 @@ mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
       }, 5)
     }
   } else if (afterBlock.type === 'minecraft:farmland' && preFarmlandBlocks.includes(beforeBlock.type)) {
-    const blockPosStr = [beforeBlock.pos.x, ',', beforeBlock.pos.y, ',', beforeBlock.pos.z, ',', beforeBlock.pos.dimid].join('')
+    const blockPosStr = posToString(beforeBlock.pos)
     newFarmlands.add(blockPosStr)
     setTimeout(() => {
       newFarmlands.delete(blockPosStr)
+    }, 50)
+  } else if (cakes.includes(beforeBlock.type) && (beforeBlock.getBlockState()?.['bite_counter'] ?? 0) + 1 === (afterBlock.getBlockState()?.['bite_counter'] ?? 7)) {
+    const blockPosStateStr = posToString(beforeBlock.pos) + beforeBlock.getBlockState()?.['bite_counter']
+    cakesAten.add(blockPosStateStr)
+    setTimeout(() => {
+      cakesAten.delete(blockPosStateStr)
     }, 50)
   }
 })
@@ -771,7 +874,20 @@ mc.listen('onSneak', (player, isSneaking) => {
 
 // 钓鱼
 mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
-
+  if (player.isSimulatedPlayer()) { return }
+  if (entity.type === 'minecraft:item') {
+    logger.info(item.type)
+    db.set(player.realName, 'fished', 'add', 1)
+    if (fishingLootTable.fish.includes(item.type)) {
+      db.setSub(player.realName, 'fished', 'fish', 'add', 1)
+    } else if (fishingLootTable.junk.includes(item.type) && !item.isEnchanted) {
+      db.setSub(player.realName, 'fished', 'junk', 'add', 1)
+    } else {
+      db.setSub(player.realName, 'fished', 'treasure', 'add', 1)
+    }
+  } else {
+    db.set(player.realName, 'hooked', 'add', 1)
+  }
 })
 
 // ==============================================================================================
