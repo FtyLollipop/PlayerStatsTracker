@@ -135,6 +135,30 @@ const listenPlacedBlocks = [
   'minecraft:ancient_debris'
 ]
 
+const listenMovePlacedBlocks = [
+  'minecraft:coal_ore',
+  'minecraft:deepslate_coal_ore',
+  'minecraft:iron_ore',
+  'minecraft:deepslate_iron_ore',
+  'minecraft:copper_ore',
+  'minecraft:deepslate_copper_ore',
+  'minecraft:lapis_ore',
+  'minecraft:deepslate_lapis_ore',
+  'minecraft:gold_ore',
+  'minecraft:deepslate_gold_ore',
+  'minecraft:redstone_ore',
+  'minecraft:deepslate_redstone_ore',
+  'minecraft:lit_redstone_ore',
+  'minecraft:lit_deepslate_redstone_ore',
+  'minecraft:diamond_ore',
+  'minecraft:deepslate_diamond_ore',
+  'minecraft:emerald_ore',
+  'minecraft:deepslate_emerald_ore',
+  'minecraft:quartz_ore',
+  'minecraft:nether_gold_ore',
+  'minecraft:ancient_debris'
+]
+
 const redstoneOres = [
   'minecraft:redstone_ore',
   'minecraft:lit_redstone_ore',
@@ -252,6 +276,7 @@ for (let i = 0; i < rankingKeys.length; i++) {
 let db
 let newFarmlands = new Set()
 let cakesAten = new Set()
+let listenMovePlacedBlocksQueue = []
 // 服务器启动
 mc.listen('onServerStarted', () => {
   db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
@@ -758,9 +783,23 @@ mc.listen('onUseItemOn', (player, item, block, side, pos) => {
   }
 })
 
+// 活塞推动
+mc.listen('onPistonPush', (pistonPos, block) => {
+  if (listenMovePlacedBlocks.includes(block.type)) {
+    if(db.hasPlacedBlock(block.pos)) {
+      db.deletePlacedBlock(block.pos)
+      listenMovePlacedBlocksQueue.push(true)
+    } else {
+      listenMovePlacedBlocksQueue.push(false)
+    }
+  }
+})
+
 // 方块改变
 mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
-  if (listenPlacedBlocks.includes(beforeBlock.type)) {
+  if (beforeBlock.type === 'minecraft:moving_block' && listenMovePlacedBlocks.includes(afterBlock.type) && listenMovePlacedBlocksQueue.shift()) {
+      db.addPlacedBlock(beforeBlock.pos)
+  } else if (listenPlacedBlocks.includes(beforeBlock.type)) {
     if ((!redstoneOres.includes(beforeBlock.type) || !redstoneOres.includes(afterBlock.type)) && (!deepslateRedstoneOres.includes(beforeBlock.type) || !deepslateRedstoneOres.includes(afterBlock.type))) {
       setTimeout(() => {
         db.deletePlacedBlock(beforeBlock.pos)
@@ -771,13 +810,13 @@ mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
     newFarmlands.add(blockPosStr)
     setTimeout(() => {
       newFarmlands.delete(blockPosStr)
-    }, 50)
+    }, 40)
   } else if (cakes.includes(beforeBlock.type) && (beforeBlock.getBlockState()?.['bite_counter'] ?? 0) + 1 === (afterBlock.getBlockState()?.['bite_counter'] ?? 7)) {
     const blockPosStateStr = posToString(beforeBlock.pos) + beforeBlock.getBlockState()?.['bite_counter']
     cakesAten.add(blockPosStateStr)
     setTimeout(() => {
       cakesAten.delete(blockPosStateStr)
-    }, 50)
+    }, 40)
   }
 })
 
@@ -822,6 +861,7 @@ mc.listen('onDestroyBlock', (player, block) => {
     db.setSub(player.realName, 'netherMined', block.type, 'add', 1)
   }
 })
+
 
 // 放置方块
 mc.listen('afterPlaceBlock', (player, block) => {
