@@ -45,6 +45,8 @@ const defaultPlayerData = {
     },
     killed: { // 具体击杀数
       'minecraft:horse': 0,
+      'minecraft:skeleton_horse': 0,
+      'minecraft:zombie_horse': 0,
       'minecraft:donkey': 0,
       'minecraft:mule': 0,
       'minecraft:wandering_trader': 0,
@@ -105,6 +107,19 @@ const defaultPlayerData = {
       'minecraft:quartz_ore': 0,
       'minecraft:nether_gold_ore': 0,
       'minecraft:ancient_debris': 0
+    },
+    distanceMoved: {
+      'aviate': 0,
+      'minecraft:boat': 0,
+      'minecraft:chest_boat': 0,
+      'minecraft:minecart': 0,
+      'minecraft:horse': 0,
+      'minecraft:skeleton_horse': 0,
+      'minecraft:zombie_horse': 0,
+      'minecraft:donkey': 0,
+      'minecraft:mule': 0,
+      'minecraft:pig': 0,
+      'minecraft:strider': 0
     }
   }
 }
@@ -227,42 +242,43 @@ const rankingKeys = [
     text: '§0基础信息§r', keys: [
       { text: '游玩时间', key: 'playTime' },
       { text: '登录天数', key: 'loginDays' },
-      { text: '破坏方块', key: 'destroyed' },
-      { text: '放置方块', key: 'placed' },
-      { text: '跳跃', key: 'jumped' },
-      { text: '消耗的不死图腾', key: 'totem' },
-      { text: '聊天数', key: 'chat' },
+      { text: '破坏方块数', key: 'destroyed' },
+      { text: '放置方块数', key: 'placed' },
+      { text: '跳跃次数', key: 'jumped' },
+      { text: '移动距离', key: 'distanceMoved' },
+      { text: '消耗不死图腾数', key: 'totem' },
+      { text: '聊天次数', key: 'chat' },
       { text: '聊天字符数', key: 'chatChars' },
-      { text: '累计经验', key: 'expObtained' },
+      { text: '累计获得经验', key: 'expObtained' },
       { text: '最高等级', key: 'highestLevel' },
-      { text: '吃掉食物', key: 'ate' }
+      { text: '吃掉食物数', key: 'ate' }
     ]
   },
   {
     text: '§c战斗§r', keys: [
-      { text: '击杀', key: 'killed' },
-      { text: '死亡', key: 'death' },
+      { text: '击杀数', key: 'killed' },
+      { text: '死亡数', key: 'death' },
       { text: '累计造成伤害', key: 'damageDealt' },
       { text: '累计受到伤害', key: 'damageTaken' }
     ]
   },
   {
     text: '§8挖矿§r', keys: [
-      { text: '主世界挖矿', key: 'overworldMined' },
-      { text: '下界挖矿', key: 'netherMined' }
+      { text: '主世界挖矿数', key: 'overworldMined' },
+      { text: '下界挖矿数', key: 'netherMined' }
     ]
   },
   {
     text: '§2种植§r', keys: [
-      { text: '耕地', key: 'tilled' },
-      { text: '种植', key: 'planted' },
-      { text: '收获', key: 'harvested' }
+      { text: '耕地次数', key: 'tilled' },
+      { text: '种植次数', key: 'planted' },
+      { text: '收获次数', key: 'harvested' }
     ]
   },
   {
     text: '§3钓鱼§r', keys: [
-      { text: '钓鱼', key: 'fished' },
-      { text: '钩实体', key: 'hooked' }
+      { text: '钓鱼次数', key: 'fished' },
+      { text: '钩实体次数', key: 'hooked' }
     ]
   }
 ]
@@ -464,7 +480,7 @@ function showRanking(player) {
       rankingForm.setTitle('统计排行榜-' + keyItem.text)
       if (keyItem.key === 'playTime') {
         rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true, secToTime))
-      } else if (keyItem.key === 'damageTaken' || keyItem.key === 'damageDealt') {
+      } else if (['distanceMoved','damageTaken','damageDealt'].includes(keyItem.key)) {
         rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true, value => value.toFixed(2)))
       } else {
         rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true))
@@ -527,33 +543,40 @@ function formatStats(stats, colorful) {
 最后在线时间: ${dateToString(new Date(stats.lastOnline))}
 游玩时间: ${secToTime(stats.playTime)}
 登录天数: ${stats.loginDays}
-破坏方块: ${stats.destroyed}
-放置方块: ${stats.placed}
-跳跃: ${stats.jumped}
-消耗的不死图腾: ${stats.totem}
-聊天数: ${stats.chat}
+破坏方块数: ${stats.destroyed}
+放置方块数: ${stats.placed}
+跳跃次数: ${stats.jumped}
+移动距离: ${stats.distanceMoved.toFixed(2)}
+  - 乘船: ${(stats.subStats.distanceMoved['minecraft:boat'] + stats.subStats.distanceMoved['minecraft:chest_boat']).toFixed(2)}
+  - 乘矿车: ${stats.subStats.distanceMoved['minecraft:minecart'].toFixed(2)}
+  - 骑马属: ${(stats.subStats.distanceMoved['minecraft:horse'] + stats.subStats.distanceMoved['minecraft:skeleton_horse'] + stats.subStats.distanceMoved['minecraft:zombie_horse'] + stats.subStats.distanceMoved['minecraft:donkey'] + stats.subStats.distanceMoved['minecraft:mule']).toFixed(2)}
+  - 骑猪: ${stats.subStats.distanceMoved['minecraft:pig'].toFixed(2)}
+  - 骑炽足兽: ${stats.subStats.distanceMoved['minecraft:strider'].toFixed(2)}
+  - 鞘翅飞行: ${stats.subStats.distanceMoved['aviate'].toFixed(2)}
+消耗不死图腾数: ${stats.totem}
+聊天次数: ${stats.chat}
 聊天字符数: ${stats.chatChars}
-累计经验: ${stats.expObtained}
+累计获得经验: ${stats.expObtained}
 最高等级: ${stats.highestLevel}
-吃掉食物: ${stats.ate}
+吃掉食物数: ${stats.ate}
   - 金苹果: ${stats.subStats.ate['minecraft:golden_apple']}
   - 附魔金苹果: ${stats.subStats.ate['minecraft:enchanted_golden_apple']}
 
 §c§l========== 战斗 ==========§r
-击杀: ${stats.killed}
-  - 马属: ${stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule']}
+击杀数: ${stats.killed}
+  - 马属: ${stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:skeleton_horse'] + stats.subStats.killed['minecraft:zombie_horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule']}
   - 流浪商人: ${stats.subStats.killed['minecraft:wandering_trader']}
   - 行商羊驼: ${stats.subStats.killed['minecraft:trader_llama']}
   - 铁傀儡: ${stats.subStats.killed['minecraft:iron_golem']}
   - 监守者: ${stats.subStats.killed['minecraft:warden']}
   - 凋灵: ${stats.subStats.killed['minecraft:wither']}
   - 末影龙: ${stats.subStats.killed['minecraft:ender_dragon']}
-死亡: ${stats.death}
+死亡数: ${stats.death}
 累计造成伤害: ${stats.damageDealt.toFixed(2)}
 累计受到伤害: ${stats.damageTaken.toFixed(2)}
 
 §7§l========== 挖矿 ==========§r
-主世界挖矿: ${stats.overworldMined}
+主世界挖矿数: ${stats.overworldMined}
   - 煤矿石: ${stats.subStats.overworldMined['minecraft:coal_ore']}
   - 深层煤矿石: ${stats.subStats.overworldMined['minecraft:deepslate_coal_ore']}
   - 铁矿石: ${stats.subStats.overworldMined['minecraft:iron_ore']}
@@ -570,14 +593,14 @@ function formatStats(stats, colorful) {
   - 深层钻石矿石: ${stats.subStats.overworldMined['minecraft:deepslate_diamond_ore']}
   - 绿宝石矿石: ${stats.subStats.overworldMined['minecraft:emerald_ore']}
   - 深层绿宝石矿石: ${stats.subStats.overworldMined['minecraft:deepslate_emerald_ore']}
-下界挖矿: ${stats.netherMined}
+下界挖矿数: ${stats.netherMined}
   - 下界石英矿石: ${stats.subStats.netherMined['minecraft:quartz_ore']}
   - 下界金矿石: ${stats.subStats.netherMined['minecraft:nether_gold_ore']}
   - 远古残骸: ${stats.subStats.netherMined['minecraft:ancient_debris']}
 
 §2§l========== 种植 ==========§r
-耕地: ${stats.tilled}
-种植: ${stats.planted}
+耕地次数: ${stats.tilled}
+种植次数: ${stats.planted}
   - 小麦种子: ${stats.subStats.planted['minecraft:wheat']}
   - 甜菜种子: ${stats.subStats.planted['minecraft:beetroot']}
   - 马铃薯: ${stats.subStats.planted['minecraft:potatoes']}
@@ -588,7 +611,7 @@ function formatStats(stats, colorful) {
   - 瓶子草荚果: ${stats.subStats.planted['minecraft:pitcher_crop']}
   - 可可豆: ${stats.subStats.planted['minecraft:cocoa']}
   - 下界疣: ${stats.subStats.planted['minecraft:nether_wart']}
-收获: ${stats.harvested}
+收获次数: ${stats.harvested}
   - 小麦: ${stats.subStats.harvested['minecraft:wheat']}
   - 甜菜根: ${stats.subStats.harvested['minecraft:beetroot']}
   - 马铃薯: ${stats.subStats.harvested['minecraft:potatoes']}
@@ -601,11 +624,11 @@ function formatStats(stats, colorful) {
   - 下界疣: ${stats.subStats.harvested['minecraft:nether_wart']}
   
 §3§l========== 钓鱼 ==========§r
-钓鱼: ${stats.fished}
+钓鱼次数: ${stats.fished}
   - 鱼: ${stats.subStats.fished['fish']}
   - 宝藏: ${stats.subStats.fished['treasure']}
   - 垃圾: ${stats.subStats.fished['junk']}
-钩实体: ${stats.hooked}`
+钩实体次数: ${stats.hooked}`
   return colorful ? str : str.replace(reg, '')
 }
 
@@ -651,6 +674,36 @@ function updateLastOnline(name) {
   db.set(name, 'lastOnline', 'set', Date.now())
 }
 
+// 更新移动距离
+function updateDistanceMoved(player) {
+  const lastPosition = player.getExtraData('lastPosition')
+  const currentPosition = player.pos
+  const aviating = player.isGliding
+  const aviated = player.getExtraData('aviating')
+  let ridingEntity = null
+  if (aviating) {
+    player.setExtraData('aviating', true)
+  } else {
+    player.delExtraData('aviating')
+  }
+
+  if (player.isRiding) {
+    ridingEntity = player.getExtraData('riding')
+  } else {
+    player.delExtraData('riding')
+  }
+  player.setExtraData('lastPosition', currentPosition)
+  if (lastPosition?.dimid !== currentPosition.dimid) { return }
+
+  const distance = player.distanceTo(lastPosition)
+  db.set(player.realName, 'distanceMoved', 'add', distance)
+  if(player.isGliding && aviated) {
+    db.setSub(player.realName, 'distanceMoved', 'aviate', 'add', distance)
+  } else if (player.isRiding && ridingEntity !== null) {
+    db.setSub(player.realName, 'distanceMoved', ridingEntity, 'add', distance)
+  }
+}
+
 // 进入游戏
 mc.listen('onJoin', (player) => {
   if (player.isSimulatedPlayer()) { return }
@@ -659,13 +712,35 @@ mc.listen('onJoin', (player) => {
     db.set(player.realName, 'playTime', 'add', 1)
     updateLastOnline(player.realName)
   }, 1000))
+  player.setExtraData('movementTimer', setInterval(() => {
+    updateDistanceMoved(player)
+  }, 200))
+  player.setExtraData('debugTimer', setInterval(() => {
+    player.removeSidebar()
+    player.setSidebar('DEBUG ', {
+      [player.isOnGround ? '§2地上' : '§c地上']: 1,
+      [player.inAir ? '§2空中' : '§c空中']: 2,
+      [player.inWater ? '§2水中' : '§c水中']: 3,
+      [player.inlava ? '§2熔岩中 ' : '§c熔岩中 ']: 4,
+      [player.inWall ? '§2墙中' : '§c墙中']: 5,
+      [player.isGliding ? '§2滑行' : '§c滑行']: 6,
+      [player.isRiding ? '§2骑行' : '§c骑行']: 7,
+      [player.isFlying ? '§2飞行' : '§c飞行']: 8,
+      [player.isSneaking ? '§2潜行' : '§c潜行']: 9,
+      [player.isMoving ? '§2移动' : '§c移动']: 10,
+    }, 0)
+  }, 50))
 })
 
 // 离开游戏
 mc.listen('onLeft', (player) => {
   if (player.isSimulatedPlayer()) { return }
   clearInterval(player.getExtraData('playTimeTimer'))
+  clearInterval(player.getExtraData('movementTimer'))
+  clearInterval(player.getExtraData('debugTimer'))
   player.delExtraData('playTimeTimer')
+  player.delExtraData('movementTimer')
+  player.delExtraData('debugTimer')
   db.unmountPlayer(player.realName)
 })
 
@@ -732,9 +807,9 @@ mc.listen('onMobHurt', (mob, source, damage, cause) => {
 // 骑乘 尝试骑乘的实体 被骑乘的实体
 mc.listen('onRide', (entity1, entity2) => {
   if (entity1?.isPlayer()) {
-    const pl = entity1.toPlayer()
-    if (!pl.isSimulatedPlayer()) {
-      // something
+    const player = entity1.toPlayer()
+    if (!player.isSimulatedPlayer()) {
+      player.setExtraData('riding', entity2.type)
     }
   }
 })
@@ -786,7 +861,7 @@ mc.listen('onUseItemOn', (player, item, block, side, pos) => {
 // 活塞推动
 mc.listen('onPistonPush', (pistonPos, block) => {
   if (listenMovePlacedBlocks.includes(block.type)) {
-    if(db.hasPlacedBlock(block.pos)) {
+    if (db.hasPlacedBlock(block.pos)) {
       db.deletePlacedBlock(block.pos)
       listenMovePlacedBlocksQueue.push(true)
     } else {
@@ -798,7 +873,7 @@ mc.listen('onPistonPush', (pistonPos, block) => {
 // 方块改变
 mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
   if (beforeBlock.type === 'minecraft:moving_block' && listenMovePlacedBlocks.includes(afterBlock.type) && listenMovePlacedBlocksQueue.shift()) {
-      db.addPlacedBlock(beforeBlock.pos)
+    db.addPlacedBlock(beforeBlock.pos)
   } else if (listenPlacedBlocks.includes(beforeBlock.type)) {
     if ((!redstoneOres.includes(beforeBlock.type) || !redstoneOres.includes(afterBlock.type)) && (!deepslateRedstoneOres.includes(beforeBlock.type) || !deepslateRedstoneOres.includes(afterBlock.type))) {
       setTimeout(() => {
@@ -888,8 +963,6 @@ mc.listen('onExperienceAdd', (player, exp) => {
 
 // 弹射物创建完毕
 mc.listen('onProjectileCreated', (shooter, entity) => {
-  if (entity.type === 'minecraft:fishing_hook') {
-  }
 })
 
 // 方块被弹射物击中
@@ -915,17 +988,16 @@ mc.listen('onSneak', (player, isSneaking) => {
 // 钓鱼
 mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
   if (player.isSimulatedPlayer()) { return }
-  if (entity.type === 'minecraft:item') {
-    logger.info(item.type)
+  if (entity.type === 'minecraft:item') { // 钓鱼
     db.set(player.realName, 'fished', 'add', 1)
-    if (fishingLootTable.fish.includes(item.type)) {
+    if (fishingLootTable.fish.includes(item.type)) { // 鱼
       db.setSub(player.realName, 'fished', 'fish', 'add', 1)
-    } else if (fishingLootTable.junk.includes(item.type) && !item.isEnchanted) {
+    } else if (fishingLootTable.junk.includes(item.type) && !item.isEnchanted) { // 垃圾
       db.setSub(player.realName, 'fished', 'junk', 'add', 1)
-    } else {
+    } else { // 宝藏
       db.setSub(player.realName, 'fished', 'treasure', 'add', 1)
     }
-  } else {
+  } else { // 钩实体
     db.set(player.realName, 'hooked', 'add', 1)
   }
 })
@@ -1247,6 +1319,7 @@ class DataBase {
     this.#backupFlag = false
     while (this.#mountQueue.length !== 0) {
       this.#dbMount(this.#mountQueue.shift())
+
     }
     while (this.#unmountQueue.length !== 0) {
       this.#dbUnmount(this.#unmountQueue.shift())
