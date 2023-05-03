@@ -14,6 +14,7 @@ const exportLocation = config.get('exportLocation') || defaultConfig.exportLocat
 const databaseSaveInterval = Math.floor(config.get('databaseSaveInterval')) || defaultConfig.databaseSaveInterval
 
 const strings = {
+  playerName: '玩家名称',
   baseinfo: '基础信息',
   combat: '战斗',
   mining: '挖矿',
@@ -129,6 +130,145 @@ const strings = {
       'minecraft:strider': '骑炽足兽'
     }
   }
+}
+
+function statsToFormattedList(stats) {
+  return [
+    {
+      title: strings.baseinfo,
+      titleFormat: '§f§l',
+      contents: [
+        { title: strings.lastOnline, value: dateToString(new Date(stats.lastOnline)) },
+        { title: strings.playTime, value: secToTime(stats.playTime) },
+        { title: strings.destroyed, value: stats.destroyed },
+        { title: strings.placed, value: stats.placed },
+        { title: strings.jumped, value: stats.jumped },
+        {
+          title: strings.distanceMoved, value: stats.distanceMoved.toFixed(2), subContents: [
+            { title: strings.subStrings.distanceMoved['minecraft:boat'], value: (stats.subStats.distanceMoved['minecraft:boat'] + stats.subStats.distanceMoved['minecraft:chest_boat']).toFixed(2) },
+            { title: strings.subStrings.distanceMoved['minecraft:minecart'], value: stats.subStats.distanceMoved['minecraft:minecart'].toFixed(2) },
+            { title: strings.subStrings.distanceMoved['equus'], value: (stats.subStats.distanceMoved['minecraft:horse'] + stats.subStats.distanceMoved['minecraft:skeleton_horse'] + stats.subStats.distanceMoved['minecraft:zombie_horse'] + stats.subStats.distanceMoved['minecraft:donkey'] + stats.subStats.distanceMoved['minecraft:mule']).toFixed(2) },
+            { title: strings.subStrings.distanceMoved['minecraft:pig'], value: stats.subStats.distanceMoved['minecraft:pig'].toFixed(2) },
+            { title: strings.subStrings.distanceMoved['minecraft:strider'], value: stats.subStats.distanceMoved['minecraft:strider'].toFixed(2) },
+            { title: strings.subStrings.distanceMoved['aviate'], value: stats.subStats.distanceMoved['aviate'].toFixed(2) }
+          ]
+        },
+        { title: strings.totem, value: stats.totem },
+        { title: strings.chat, value: stats.chat },
+        { title: strings.chatChars, value: stats.chatChars },
+        { title: strings.expObtained, value: stats.expObtained },
+        { title: strings.highestLevel, value: stats.highestLevel },
+        {
+          title: strings.ate, value: stats.ate, subContents: [
+            { title: strings.subStrings.ate['minecraft:golden_apple'], value: stats.subStats.ate['minecraft:golden_apple'] },
+            { title: strings.subStrings.ate['minecraft:enchanted_golden_apple'], value: stats.subStats.ate['minecraft:enchanted_golden_apple'] }
+          ]
+        }
+      ]
+    },
+    {
+      title: strings.combat,
+      titleFormat: '§c§l',
+      contents: [
+        {
+          title: strings.killed, value: stats.killed, subContents: [
+            { title: strings.subStrings.killed['equus'], value: stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:skeleton_horse'] + stats.subStats.killed['minecraft:zombie_horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule'] },
+            { title: strings.subStrings.killed['minecraft:wandering_trader'], value: stats.subStats.killed['minecraft:wandering_trader'] },
+            { title: strings.subStrings.killed['minecraft:trader_llama'], value: stats.subStats.killed['minecraft:trader_llama'] },
+            { title: strings.subStrings.killed['minecraft:iron_golem'], value: stats.subStats.killed['minecraft:iron_golem'] },
+            { title: strings.subStrings.killed['minecraft:warden'], value: stats.subStats.killed['minecraft:warden'] },
+            { title: strings.subStrings.killed['minecraft:wither'], value: stats.subStats.killed['minecraft:wither'] },
+            { title: strings.subStrings.killed['minecraft:ender_dragon'], value: stats.subStats.killed['minecraft:ender_dragon'] }
+          ]
+        },
+        { title: strings.death, value: stats.death },
+        { title: strings.damageDealt, value: stats.damageDealt },
+        { title: strings.damageTaken, value: stats.damageTaken }
+      ]
+    },
+    {
+      title: strings.mining,
+      titleFormat: '§7§l',
+      contents: [
+        {
+          title: strings.overworldMined, value: stats.overworldMined, subContents: [
+            { title: strings.subStrings.overworldMined['minecraft:coal_ore'], value: stats.subStats.overworldMined['minecraft:coal_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_coal_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_coal_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:iron_ore'], value: stats.subStats.overworldMined['minecraft:iron_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_iron_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_iron_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:copper_ore'], value: stats.subStats.overworldMined['minecraft:copper_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_copper_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_copper_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:lapis_ore'], value: stats.subStats.overworldMined['minecraft:lapis_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_lapis_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_lapis_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:gold_ore'], value: stats.subStats.overworldMined['minecraft:gold_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_gold_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_gold_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:redstone_ore'], value: stats.subStats.overworldMined['minecraft:redstone_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_redstone_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_redstone_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:diamond_ore'], value: stats.subStats.overworldMined['minecraft:diamond_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_diamond_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_diamond_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:emerald_ore'], value: stats.subStats.overworldMined['minecraft:emerald_ore'] },
+            { title: strings.subStrings.overworldMined['minecraft:deepslate_emerald_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_emerald_ore'] }
+          ]
+        },
+        {
+          title: strings.netherMined, value: stats.netherMined, subContents: [
+            { title: strings.subStrings.netherMined['minecraft:quartz_ore'], value: stats.subStats.netherMined['minecraft:quartz_ore'] },
+            { title: strings.subStrings.netherMined['minecraft:nether_gold_ore'], value: stats.subStats.netherMined['minecraft:nether_gold_ore'] },
+            { title: strings.subStrings.netherMined['minecraft:ancient_debris'], value: stats.subStats.netherMined['minecraft:ancient_debris'] }
+          ]
+        }
+      ]
+    },
+    {
+      title: strings.planting,
+      titleFormat: '§2§l',
+      contents: [
+        { title: strings.tilled, value: stats.tilled },
+        {
+          title: strings.planted, value: stats.planted, subContents: [
+            { title: strings.subStrings.planted['minecraft:wheat'], value: stats.subStats.planted['minecraft:wheat'] },
+            { title: strings.subStrings.planted['minecraft:beetroot'], value: stats.subStats.planted['minecraft:beetroot'] },
+            { title: strings.subStrings.planted['minecraft:potatoes'], value: stats.subStats.planted['minecraft:potatoes'] },
+            { title: strings.subStrings.planted['minecraft:carrots'], value: stats.subStats.planted['minecraft:carrots'] },
+            { title: strings.subStrings.planted['minecraft:melon_stem'], value: stats.subStats.planted['minecraft:melon_stem'] },
+            { title: strings.subStrings.planted['minecraft:pumpkin_stem'], value: stats.subStats.planted['minecraft:pumpkin_stem'] },
+            { title: strings.subStrings.planted['minecraft:torchflower_crop'], value: stats.subStats.planted['minecraft:torchflower_crop'] },
+            { title: strings.subStrings.planted['minecraft:pitcher_crop'], value: stats.subStats.planted['minecraft:pitcher_crop'] },
+            { title: strings.subStrings.planted['minecraft:cocoa'], value: stats.subStats.planted['minecraft:cocoa'] },
+            { title: strings.subStrings.planted['minecraft:nether_wart'], value: stats.subStats.planted['minecraft:nether_wart'] },
+          ]
+        },
+        {
+          title: strings.harvested, value: stats.harvested, subContents: [
+            { title: strings.subStrings.harvested['minecraft:wheat'], value: stats.subStats.harvested['minecraft:wheat'] },
+            { title: strings.subStrings.harvested['minecraft:beetroot'], value: stats.subStats.harvested['minecraft:beetroot'] },
+            { title: strings.subStrings.harvested['minecraft:potatoes'], value: stats.subStats.harvested['minecraft:potatoes'] },
+            { title: strings.subStrings.harvested['minecraft:carrots'], value: stats.subStats.harvested['minecraft:carrots'] },
+            { title: strings.subStrings.harvested['minecraft:melon_block'], value: stats.subStats.harvested['minecraft:melon_block'] },
+            { title: strings.subStrings.harvested['minecraft:pumpkin'], value: stats.subStats.harvested['minecraft:pumpkin'] },
+            { title: strings.subStrings.harvested['minecraft:torchflower_crop'], value: stats.subStats.harvested['minecraft:torchflower_crop'] },
+            { title: strings.subStrings.harvested['minecraft:pitcher_crop'], value: stats.subStats.harvested['minecraft:pitcher_crop'] },
+            { title: strings.subStrings.harvested['minecraft:cocoa'], value: stats.subStats.harvested['minecraft:cocoa'] },
+            { title: strings.subStrings.harvested['minecraft:nether_wart'], value: stats.subStats.harvested['minecraft:nether_wart'] },
+          ]
+        }
+      ]
+    },
+    {
+      title: strings.fishing,
+      titleFormat: '§3§l',
+      contents: [
+        {
+          title: strings.fished, value: stats.fished, subContents: [
+            { title: strings.subStrings.fished['fish'], value: stats.subStats.fished['fish'] },
+            { title: strings.subStrings.fished['treasure'], value: stats.subStats.fished['treasure'] },
+            { title: strings.subStrings.fished['junk'], value: stats.subStats.fished['junk'] }
+          ]
+        },
+        { title: strings.hooked, value: stats.hooked }
+      ]
+    }
+  ]
 }
 
 const defaultPlayerData = {
@@ -672,96 +812,21 @@ function dateToTimeString(date, format = 'hh:mm:ss') {
 
 function formatStats(stats, colorful) {
   const reg = /§./g
-  let str = `§6◁〖§f§l ${strings.baseinfo} §r§6〗▷§r
-${strings.lastOnline}: ${dateToString(new Date(stats.lastOnline))}
-${strings.playTime}: ${secToTime(stats.playTime)}
-${strings.loginDays}: ${stats.loginDays}
-${strings.destroyed}: ${stats.destroyed}
-${strings.placed}: ${stats.placed}
-${strings.jumped}: ${stats.jumped}
-${strings.distanceMoved}: ${stats.distanceMoved.toFixed(2)}
-  - ${strings.subStrings.distanceMoved['minecraft:boat']}: ${(stats.subStats.distanceMoved['minecraft:boat'] + stats.subStats.distanceMoved['minecraft:chest_boat']).toFixed(2)}
-  - ${strings.subStrings.distanceMoved['minecraft:minecart']}: ${stats.subStats.distanceMoved['minecraft:minecart'].toFixed(2)}
-  - ${strings.subStrings.distanceMoved['equus']}: ${(stats.subStats.distanceMoved['minecraft:horse'] + stats.subStats.distanceMoved['minecraft:skeleton_horse'] + stats.subStats.distanceMoved['minecraft:zombie_horse'] + stats.subStats.distanceMoved['minecraft:donkey'] + stats.subStats.distanceMoved['minecraft:mule']).toFixed(2)}
-  - ${strings.subStrings.distanceMoved['minecraft:pig']}: ${stats.subStats.distanceMoved['minecraft:pig'].toFixed(2)}
-  - ${strings.subStrings.distanceMoved['minecraft:strider']}: ${stats.subStats.distanceMoved['minecraft:strider'].toFixed(2)}
-  - ${strings.subStrings.distanceMoved['aviate']}: ${stats.subStats.distanceMoved['aviate'].toFixed(2)}
-${strings.totem}: ${stats.totem}
-${strings.chat}: ${stats.chat}
-${strings.chatChars}: ${stats.chatChars}
-${strings.expObtained}: ${stats.expObtained}
-${strings.highestLevel}: ${stats.highestLevel}
-${strings.ate}: ${stats.ate}
-  - ${strings.subStrings.ate['minecraft:golden_apple']}: ${stats.subStats.ate['minecraft:golden_apple']}
-  - ${strings.subStrings.ate['minecraft:enchanted_golden_apple']}: ${stats.subStats.ate['minecraft:enchanted_golden_apple']}
+  const statsFormattedList = statsToFormattedList(stats)
+  let str = ''
 
-§6◁〖§c§l ${strings.combat} §r§6〗▷§r
-${strings.killed}: ${stats.killed}
-  - ${strings.subStrings.killed['equus']}: ${stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:skeleton_horse'] + stats.subStats.killed['minecraft:zombie_horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule']}
-  - ${strings.subStrings.killed['minecraft:wandering_trader']}: ${stats.subStats.killed['minecraft:wandering_trader']}
-  - ${strings.subStrings.killed['minecraft:trader_llama']}: ${stats.subStats.killed['minecraft:trader_llama']}
-  - ${strings.subStrings.killed['minecraft:iron_golem']}: ${stats.subStats.killed['minecraft:iron_golem']}
-  - ${strings.subStrings.killed['minecraft:warden']}: ${stats.subStats.killed['minecraft:warden']}
-  - ${strings.subStrings.killed['minecraft:wither']}: ${stats.subStats.killed['minecraft:wither']}
-  - ${strings.subStrings.killed['minecraft:ender_dragon']}: ${stats.subStats.killed['minecraft:ender_dragon']}
-${strings.death}: ${stats.death}
-${strings.damageDealt}: ${stats.damageDealt.toFixed(2)}
-${strings.damageTaken}: ${stats.damageTaken.toFixed(2)}
-
-§6◁〖§7§l ${strings.mining} §r§6〗▷§r
-${strings.overworldMined}: ${stats.overworldMined}
-  - ${strings.subStrings.overworldMined['minecraft:coal_ore']}: ${stats.subStats.overworldMined['minecraft:coal_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_coal_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_coal_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:iron_ore']}: ${stats.subStats.overworldMined['minecraft:iron_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_iron_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_iron_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:copper_ore']}: ${stats.subStats.overworldMined['minecraft:copper_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_copper_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_copper_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:lapis_ore']}: ${stats.subStats.overworldMined['minecraft:lapis_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_lapis_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_lapis_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:gold_ore']}: ${stats.subStats.overworldMined['minecraft:gold_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_gold_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_gold_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:redstone_ore']}: ${stats.subStats.overworldMined['minecraft:redstone_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_redstone_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_redstone_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:diamond_ore']}: ${stats.subStats.overworldMined['minecraft:diamond_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_diamond_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_diamond_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:emerald_ore']}: ${stats.subStats.overworldMined['minecraft:emerald_ore']}
-  - ${strings.subStrings.overworldMined['minecraft:deepslate_emerald_ore']}: ${stats.subStats.overworldMined['minecraft:deepslate_emerald_ore']}
-${strings.netherMined}: ${stats.netherMined}
-  - ${strings.subStrings.netherMined['minecraft:quartz_ore']}: ${stats.subStats.netherMined['minecraft:quartz_ore']}
-  - ${strings.subStrings.netherMined['minecraft:nether_gold_ore']}: ${stats.subStats.netherMined['minecraft:nether_gold_ore']}
-  - ${strings.subStrings.netherMined['minecraft:ancient_debris']}: ${stats.subStats.netherMined['minecraft:ancient_debris']}
-
-§6◁〖§2§l ${strings.planting} §r§6〗▷§r
-${strings.tilled}: ${stats.tilled}
-${strings.planted}: ${stats.planted}
-  - ${strings.subStrings.planted['minecraft:wheat']}: ${stats.subStats.planted['minecraft:wheat']}
-  - ${strings.subStrings.planted['minecraft:beetroot']}: ${stats.subStats.planted['minecraft:beetroot']}
-  - ${strings.subStrings.planted['minecraft:potatoes']}: ${stats.subStats.planted['minecraft:potatoes']}
-  - ${strings.subStrings.planted['minecraft:carrots']}: ${stats.subStats.planted['minecraft:carrots']}
-  - ${strings.subStrings.planted['minecraft:melon_stem']}: ${stats.subStats.planted['minecraft:melon_stem']}
-  - ${strings.subStrings.planted['minecraft:pumpkin_stem']}: ${stats.subStats.planted['minecraft:pumpkin_stem']}
-  - ${strings.subStrings.planted['minecraft:torchflower_crop']}: ${stats.subStats.planted['minecraft:torchflower_crop']}
-  - ${strings.subStrings.planted['minecraft:pitcher_crop']}: ${stats.subStats.planted['minecraft:pitcher_crop']}
-  - ${strings.subStrings.planted['minecraft:cocoa']}: ${stats.subStats.planted['minecraft:cocoa']}
-  - ${strings.subStrings.planted['minecraft:nether_wart']}: ${stats.subStats.planted['minecraft:nether_wart']}
-${strings.harvested}: ${stats.harvested}
-  - ${strings.subStrings.harvested['minecraft:wheat']}: ${stats.subStats.harvested['minecraft:wheat']}
-  - ${strings.subStrings.harvested['minecraft:beetroot']}: ${stats.subStats.harvested['minecraft:beetroot']}
-  - ${strings.subStrings.harvested['minecraft:potatoes']}: ${stats.subStats.harvested['minecraft:potatoes']}
-  - ${strings.subStrings.harvested['minecraft:carrots']}: ${stats.subStats.harvested['minecraft:carrots']}
-  - ${strings.subStrings.harvested['minecraft:melon_block']}: ${stats.subStats.harvested['minecraft:melon_block']}
-  - ${strings.subStrings.harvested['minecraft:pumpkin']}: ${stats.subStats.harvested['minecraft:pumpkin']}
-  - ${strings.subStrings.harvested['minecraft:torchflower_crop']}: ${stats.subStats.harvested['minecraft:torchflower_crop']}
-  - ${strings.subStrings.harvested['minecraft:pitcher_crop']}: ${stats.subStats.harvested['minecraft:pitcher_crop']}
-  - ${strings.subStrings.harvested['minecraft:cocoa']}: ${stats.subStats.harvested['minecraft:cocoa']}
-  - ${strings.subStrings.harvested['minecraft:nether_wart']}: ${stats.subStats.harvested['minecraft:nether_wart']}
-  
-§6◁〖§3§l ${strings.fishing} §r§6〗▷§r
-${strings.fished}: ${stats.fished}
-  - ${strings.subStrings.fished['fish']}: ${stats.subStats.fished['fish']}
-  - ${strings.subStrings.fished['treasure']}: ${stats.subStats.fished['treasure']}
-  - ${strings.subStrings.fished['junk']}: ${stats.subStats.fished['junk']}
-${strings.hooked}: ${stats.hooked}`
+  for (let i = 0; i < statsFormattedList.length; i++) {
+    str += `§6◁〖§r ${statsFormattedList[i].titleFormat}${statsFormattedList[i].title} §r§6〗▷§r\n`
+    for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
+      str += `${statsFormattedList[i].contents[j].title}: ${statsFormattedList[i].contents[j].value}\n`
+      if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+        for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
+          str += `  - ${statsFormattedList[i].contents[j].subContents[k].title}: ${statsFormattedList[i].contents[j].subContents[k].value}\n`
+        }
+      }
+    }
+    str += '\n'
+  }
   return colorful ? str : str.replace(reg, '')
 }
 
@@ -800,18 +865,45 @@ function formatRanking(ranking, colorful, func = str => str) {
 
 function exportStats() {
   const timeObj = system.getTimeObj()
-  const path = [exportLocation, '/', timeObj.Y, '-', timeObj.M < 10 ? '0' + timeObj.M : timeObj.M, '-', timeObj.D < 10 ? '0' + timeObj.D : timeObj.D, ' ', timeObj.h < 10 ? '0' + timeObj.h : timeObj.h, '-', timeObj.m < 10 ? '0' + timeObj.m : timeObj.m, '-', timeObj.s < 10 ? '0' + timeObj.s : timeObj.s, '.csv'].join('')
+  const path = [exportLocation, '/', timeObj.Y, '-', timeObj.M < 10 ? '0' + timeObj.M : timeObj.M, '-', timeObj.D < 10 ? '0' + timeObj.D : timeObj.D, '_', timeObj.h < 10 ? '0' + timeObj.h : timeObj.h, '-', timeObj.m < 10 ? '0' + timeObj.m : timeObj.m, '-', timeObj.s < 10 ? '0' + timeObj.s : timeObj.s, '.csv'].join('')
   if (File.exists(path)) {
     return false
   } else {
-    if (!File.mkdir(path)) {
-      return false
-    } else {
-      let exportContents = `"玩家ID","${strings.lastOnline}","${strings.playTime}","${strings.loginDays}","${strings.destroyed}","${strings.placed}","${strings.jumped}","${strings.distanceMoved}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['minecraft:boat']}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['minecraft:minecart']}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['equus']}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['minecraft:pig']}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['minecraft:strider']}","${strings.distanceMoved}-${strings.subStrings.distanceMoved['aviate']}"`
-      const playersData = db.getPlayers()
-      for (let i = 0; i < playersData.length; i++) {
-
+    let exportContents = `\uFEFF"${strings.playerName}"`
+    const titleTemplate = statsToFormattedList(defaultPlayerData)
+    for (let i = 0; i < titleTemplate.length; i++) {
+      for (let j = 0; j < titleTemplate[i].contents.length; j++) {
+        exportContents += `,"${titleTemplate[i].contents[j].title}"`
+        if (titleTemplate[i].contents[j].hasOwnProperty('subContents')) {
+          for (let k = 0; k < titleTemplate[i].contents[j].subContents.length; k++) {
+            exportContents += `,"${titleTemplate[i].contents[j].title}-${titleTemplate[i].contents[j].subContents[k].title}"`
+          }
+        }
       }
+    }
+    exportContents += '\n'
+
+    const playersData = db.getPlayers()
+    for (let p = 0; p < playersData.length; p++) {
+      const playerDataFormattedList = statsToFormattedList(playersData[p].data)
+      exportContents += `"${playersData[p].name}"`
+      for (let i = 0; i < playerDataFormattedList.length; i++) {
+        for (let j = 0; j < playerDataFormattedList[i].contents.length; j++) {
+          exportContents += `,"${playerDataFormattedList[i].contents[j].value}"`
+          if (playerDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+            for (let k = 0; k < playerDataFormattedList[i].contents[j].subContents.length; k++) {
+              exportContents += `,"${playerDataFormattedList[i].contents[j].subContents[k].value}"`
+            }
+          }
+        }
+      }
+      exportContents += '\n'
+    }
+
+    if (File.writeTo(path, exportContents)) {
+      return true
+    } else {
+      return false
     }
   }
 }
@@ -866,21 +958,6 @@ mc.listen('onJoin', (player) => {
   player.setExtraData('movementTimer', setInterval(() => {
     updateDistanceMoved(player)
   }, 200))
-  // player.setExtraData('debugTimer', setInterval(() => {
-  //   player.removeSidebar()
-  //   player.setSidebar('DEBUG ', {
-  //     [player.isOnGround ? '§2地上' : '§c地上']: 1,
-  //     [player.inAir ? '§2空中' : '§c空中']: 2,
-  //     [player.inWater ? '§2水中' : '§c水中']: 3,
-  //     [player.inlava ? '§2熔岩中 ' : '§c熔岩中 ']: 4,
-  //     [player.inWall ? '§2墙中' : '§c墙中']: 5,
-  //     [player.isGliding ? '§2滑行' : '§c滑行']: 6,
-  //     [player.isRiding ? '§2骑行' : '§c骑行']: 7,
-  //     [player.isFlying ? '§2飞行' : '§c飞行']: 8,
-  //     [player.isSneaking ? '§2潜行' : '§c潜行']: 9,
-  //     [player.isMoving ? '§2移动' : '§c移动']: 10,
-  //   }, 0)
-  // }, 50))
 })
 
 // 离开游戏
@@ -892,10 +969,8 @@ mc.listen('onLeft', (player) => {
   if (player.getExtraData('movementTimer')) {
     clearInterval(player.getExtraData('movementTimer'))
   }
-  // clearInterval(player.getExtraData('debugTimer'))
   player.delExtraData('playTimeTimer')
   player.delExtraData('movementTimer')
-  // player.delExtraData('debugTimer')
   db.unmountPlayer(player.realName)
 })
 
@@ -936,11 +1011,6 @@ mc.listen('onChat', (player, msg) => {
 mc.listen('onJump', (player) => {
   if (player.isSimulatedPlayer()) { return }
   db.set(player.realName, 'jumped', 'add', 1)
-})
-
-// 使用物品
-mc.listen('onUseItem', (player, item) => {
-
 })
 
 // 生物受伤
@@ -1117,28 +1187,13 @@ mc.listen('onExperienceAdd', (player, exp) => {
 })
 
 // 弹射物创建完毕
-mc.listen('onProjectileCreated', (shooter, entity) => {
-})
-
-// 方块被弹射物击中
-mc.listen('onProjectileHitBlock', (block, source) => {
-
-})
-
-// 实体被弹射物击中
-mc.listen('onProjectileHitEntity', (entity, source) => {
-
-})
-
-// 疾跑
-mc.listen('onChangeSprinting', (player, sprinting) => {
-  if (player.isSimulatedPlayer()) { return }
-})
-
-// 潜行
-mc.listen('onSneak', (player, isSneaking) => {
-
-})
+// mc.listen('onProjectileCreated', (shooter, entity) => {
+//   if (shooter?.isPlayer() && entity.type === 'minecraft:ender_pearl') {
+//     const pl = shooter.toPlayer()
+//     if (!pl.isSimulatedPlayer()) {
+//     }
+//   }
+// })
 
 // 钓鱼
 mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
@@ -1424,7 +1479,7 @@ class DataBase {
 
   // 设置玩家某一项统计
   set(name, key, operator, value) {
-    let playerData = this.getPlayer(name)
+    let playerData = this.#dbMountQuery(name)
     switch (operator) {
       case 'set':
         playerData[key] = value
@@ -1444,7 +1499,7 @@ class DataBase {
 
   // 设置某一子项统计
   setSub(name, key, subKey, operator, value) {
-    let playerData = this.getPlayer(name)
+    let playerData = this.#dbMountQuery(name)
     switch (operator) {
       case 'set':
         playerData.subStats[key][subKey] = value
@@ -1490,7 +1545,7 @@ class DataBase {
 
     let success = false
     const timeObj = system.getTimeObj()
-    const path = [this.#backupLocation, '/', timeObj.Y, '-', timeObj.M < 10 ? '0' + timeObj.M : timeObj.M, '-', timeObj.D < 10 ? '0' + timeObj.D : timeObj.D, ' ', timeObj.h < 10 ? '0' + timeObj.h : timeObj.h, '-', timeObj.m < 10 ? '0' + timeObj.m : timeObj.m, '-', timeObj.s < 10 ? '0' + timeObj.s : timeObj.s].join('')
+    const path = [this.#backupLocation, '/', timeObj.Y, '-', timeObj.M < 10 ? '0' + timeObj.M : timeObj.M, '-', timeObj.D < 10 ? '0' + timeObj.D : timeObj.D, '_', timeObj.h < 10 ? '0' + timeObj.h : timeObj.h, '-', timeObj.m < 10 ? '0' + timeObj.m : timeObj.m, '-', timeObj.s < 10 ? '0' + timeObj.s : timeObj.s].join('')
     if (File.exists(path)) {
       success = false
     } else {
