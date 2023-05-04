@@ -1,7 +1,10 @@
 ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
 const defaultConfig = {
-  timezone: 8,
+  timezone: {
+    auto: true,
+    offset: 8
+  },
   backupLocation: './plugins/PlayerStatsTracker/backups',
   exportLocation: './plugins/PlayerStatsTracker/exports',
   databaseSaveInterval: 10000
@@ -9,6 +12,8 @@ const defaultConfig = {
 
 const config = new JsonConfigFile('./plugins/PlayerStatsTracker/config.json', data.toJson(defaultConfig))
 const timezone = config.get('timezone') || defaultConfig.timezone
+const autoTimezone = timezone?.auto || defaultConfig.timezone.auto
+const timezoneOffset = timezone?.offset || defaultConfig.timezone.auto
 const backupLocation = config.get('backupLocation') || defaultConfig.backupLocation
 const exportLocation = config.get('exportLocation') || defaultConfig.exportLocation
 const databaseSaveInterval = Math.floor(config.get('databaseSaveInterval')) || defaultConfig.databaseSaveInterval
@@ -785,27 +790,47 @@ function dateToString(date, format = 'YYYY-MM-DD hh:mm:ss') {
 }
 
 function dateToDateString(date, format = 'YYYY-MM-DD') {
-  const h = date.getUTCHours() + parseInt(timezone)
-  let dateObj = date
-  if (h >= 24) {
-    dateObj = new Date(date.valueOf() + 86400000)
-  } else if (h < 0) {
-    dateObj = new Date(date.valueOf() - 86400000)
+  let Y = null
+  let M = null
+  let D = null
+  if (autoTimezone) {
+    const timeObj = system.getTimeObj()
+    Y = timeObj.Y
+    M = timeObj.M
+    D = timeObj.D
+  } else {
+    const h = date.getUTCHours() + parseInt(timezoneOffset)
+    let dateObj = date
+    if (h >= 24) {
+      dateObj = new Date(date.valueOf() + 86400000)
+    } else if (h < 0) {
+      dateObj = new Date(date.valueOf() - 86400000)
+    }
+    Y = dateObj.getUTCFullYear()
+    M = dateObj.getUTCMonth() + 1
+    D = dateObj.getUTCDate()
   }
-  const Y = dateObj.getUTCFullYear()
-  const M = dateObj.getUTCMonth() + 1
-  const D = dateObj.getUTCDate()
   return format.replace('YYYY', Y).replace('MM', M < 10 ? '0' + M : M).replace('DD', D < 10 ? '0' + D : D).replace('M', M).replace('D', D)
 }
 
 function dateToTimeString(date, format = 'hh:mm:ss') {
-  let h = date.getUTCHours() + parseInt(timezone)
-  const m = date.getUTCMinutes()
-  const s = date.getUTCSeconds()
-  if (h >= 24) {
-    h -= 24
-  } else if (h < 0) {
-    h += 24
+  let h = null
+  let m = null
+  let s = null
+  if (autoTimezone) {
+    const timeObj = system.getTimeObj()
+    h = timeObj.h
+    m = timeObj.m
+    s = timeObj.s
+  } else {
+    h = date.getUTCHours() + parseInt(timezoneOffset)
+    m = date.getUTCMinutes()
+    s = date.getUTCSeconds()
+    if (h >= 24) {
+      h -= 24
+    } else if (h < 0) {
+      h += 24
+    }
   }
   return format.replace('hh', h < 10 ? '0' + h : h).replace('mm', m < 10 ? '0' + m : m).replace('ss', s < 10 ? '0' + s : s).replace('h', h).replace('m', m).replace('s', s)
 }
