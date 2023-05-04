@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 1, 0])
 
 const defaultConfig = {
   timezone: {
