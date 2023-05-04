@@ -145,6 +145,7 @@ function statsToFormattedList(stats) {
       contents: [
         { title: strings.lastOnline, value: dateToString(new Date(stats.lastOnline)) },
         { title: strings.playTime, value: secToTime(stats.playTime) },
+        { title: strings.loginDays, value: secToTime(stats.loginDays) },
         { title: strings.destroyed, value: stats.destroyed },
         { title: strings.placed, value: stats.placed },
         { title: strings.jumped, value: stats.jumped },
