@@ -19,6 +19,7 @@ const exportLocation = config.get('exportLocation') || defaultConfig.exportLocat
 const databaseSaveInterval = Math.floor(config.get('databaseSaveInterval')) || defaultConfig.databaseSaveInterval
 
 const strings = {
+  ranking: '排行榜',
   playerName: '玩家名称',
   baseinfo: '基础信息',
   combat: '战斗',
@@ -631,9 +632,9 @@ command3.setCallback((cmd, origin, output, results) => {
     } else {
       if (rankingKeyList.length - 1 > results.number) {
         if (rankingKeyList[results.number].key === 'playTime') {
-          output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)}`)
+          output.success(`${strings.ranking}-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)}`)
         } else {
-          output.success(`排行榜-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false)}`)
+          output.success(`${strings.ranking}-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false)}`)
         }
       } else {
         output.error('无此编号的排行榜')
@@ -720,10 +721,9 @@ function hasRankingKey(key) {
 
 // ↓ 游戏内菜单 ======================================================================
 function showStats(player, name) {
-  const easterEgg = '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n害翻，害翻，真以为你有那么多事值得统计啊？'
   let form = mc.newSimpleForm()
   form.setTitle(`${name}的统计`)
-  form.setContent(formatStats(db.getPlayer(name), true) + easterEgg)
+  form.setContent(formatStats(db.getPlayer(name), true))
   player.sendForm(form, () => {
   })
 }
