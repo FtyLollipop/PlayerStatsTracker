@@ -1054,6 +1054,7 @@ function formatRanking(ranking, colorful, func = str => str) {
   const reg = /§./g
   let str = ''
   let rank = 0
+  let rankColor = 0
   let count = 0
   let prev = null
   for (let i = 0; i < ranking.length; i++) {
@@ -1061,12 +1062,13 @@ function formatRanking(ranking, colorful, func = str => str) {
     if (prev !== ranking[i].data) {
       rank += count
       count = 0
+      rankColor++
     }
     prev = ranking[i].data
     if (i !== 0) {
       str += '\n'
     }
-    switch (rank) {
+    switch (rankColor) {
       case 1:
         str += `§g§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
         break
