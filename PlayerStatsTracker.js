@@ -201,7 +201,7 @@ const tStrings = {
       },
       ranking: {
         description: 'View ranking',
-        useCommandToQuery: 'Please use "ranking <number>" to query the ranking of a certain statistics',
+        useCommandToQuery: 'Please use "ranking <number>" to query the ranking of a certain statistics:',
         noSuchNumber: 'No ranking item with this number.'
       }
     },
