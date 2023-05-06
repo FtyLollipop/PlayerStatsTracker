@@ -820,11 +820,15 @@ command3.setCallback((cmd, origin, output, results) => {
       output.success(tStrings.commands.ranking.useCommandToQuery + keysStr)
     } else {
       if (rankingKeyList.length - 1 > results.number) {
+        let rankingStr = ''
         if (rankingKeyList[results.number].key === 'playTime') {
-          output.success(`${tStrings.ranking}-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)}`)
+          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
+        } else if (['damageTaken', 'damageDealt'].includes(rankingKeyList[results.number].key)) {
+          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, (x) => x.toFixed(2))
         } else {
-          output.success(`${tStrings.ranking}-${rankingKeyList[results.number].text}\n${formatRanking(db.getRanking(rankingKeyList[results.number].key), false)}`)
+          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false)
         }
+        output.success(`${tStrings.ranking} - ${rankingKeyList[results.number].text}\n${rankingStr}`)
       } else {
         output.error(tStrings.commands.ranking.noSuchNumber)
       }
