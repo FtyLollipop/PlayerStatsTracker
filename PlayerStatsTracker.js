@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 1, 1])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 2, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
