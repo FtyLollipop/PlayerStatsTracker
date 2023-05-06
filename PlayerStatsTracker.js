@@ -185,7 +185,7 @@ const tStrings = {
         noPermissionQueryOther: "You don't have permission to query other players."
       },
       statsdelete: {
-        description: 'Delete player stats',
+        description: 'Delete player statistics',
         noPlayerData: 'This player has no data.',
         specifyPlayerName: 'Please specify a player name.'
       },
