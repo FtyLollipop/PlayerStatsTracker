@@ -805,10 +805,6 @@ command2.setCallback((cmd, origin, output, results) => {
 })
 command2.setup()
 
-let a = {
-
-}
-
 let command3 = mc.newCommand('ranking', tStrings.commands.ranking.description, PermType.Any)
 command3.optional('number', ParamType.Int)
 command3.overload(['number'])
@@ -816,7 +812,7 @@ command3.setCallback((cmd, origin, output, results) => {
   if (origin.player) {
     showRanking(origin.player)
   } else {
-    if (results.number === null) {
+    if (results.number == null) {
       let keysStr = ''
       for (let i = 0; i < rankingKeyList.length; i++) {
         keysStr += `\n${i}. ${rankingKeyList[i].text}`
