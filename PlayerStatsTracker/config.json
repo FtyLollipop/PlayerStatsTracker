@@ -1,5 +1,0 @@
-{
-    "timezone": 8,
-    "backupLocation": "./plugins/PlayerStatsTracker/backups",
-    "databaseSaveInterval": 10000
-}
