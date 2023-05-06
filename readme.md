@@ -28,7 +28,7 @@
 
 ```json
 {
-    "language": "zh_CN", // 语言，可选中文(zh_CN)或英文(en_US)
+    "language": "zh_CN", // 显示语言，可选中文(zh_CN)或英文(en_US)
     "timezone": { // 时区
         "auto": true, // 是否使用系统时区，true为是，false为否
         "offset": 8 // 时区偏移小时数，仅支持整数，仅在不使用系统时区时生效
