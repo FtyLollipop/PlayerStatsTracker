@@ -35,11 +35,11 @@ const tStrings = {
       statsdelete: {
         description: '删除玩家的统计信息',
         noPlayerData: '无此玩家数据',
-        specifyPlayerName: '请指定玩家'
+        specifyPlayerName: '请指定玩家名'
       },
       statsbackup: {
         description: '备份统计信息数据库',
-        success: '数据库备份成功',
+        success: '数据库备份完成',
         failed: '数据库备份失败'
       },
       statsexport: {
@@ -169,6 +169,158 @@ const tStrings = {
           'minecraft:mule': '骑骡',
           'minecraft:pig': '骑猪',
           'minecraft:strider': '骑炽足兽'
+        }
+      }
+    }
+  },
+  'en_US': {
+    stats: 'Stats',
+    ranking: 'Ranking',
+    playerName: 'Player name',
+    commands: {
+      stats: {
+        description: 'View statistics',
+        noPlayerData: 'This player has no data.',
+        specifyPlayerName: 'Please specify a player name.',
+        noPermissionQueryOther: "You don't have permission to query other players."
+      },
+      statsdelete: {
+        description: 'Delete player stats',
+        noPlayerData: 'This player has no data.',
+        specifyPlayerName: 'Please specify a player name.'
+      },
+      statsbackup: {
+        description: 'Backup statistics database',
+        success: 'Database backup complete.',
+        failed: 'Database backup failed.'
+      },
+      statsexport: {
+        description: 'Export statistics',
+        success: 'Statistics export complete.',
+        failed: 'Statistics export failed.'
+      },
+      ranking: {
+        description: 'View ranking',
+        useCommandToQuery: 'Please use "ranking <number>" to query the ranking of a certain statistics',
+        noSuchNumber: 'No ranking item with this number.'
+      }
+    },
+    statsCategories: {
+      baseinfo: 'Basic info',
+      combat: 'Combat',
+      mining: 'Mining',
+      planting: 'Planting',
+      fishing: 'Fishing'
+    },
+    statsStrings: {
+      death: 'Deaths',
+      killed: 'Kills',
+      damageTaken: 'Damage Taken',
+      damageDealt: 'Damage Dealt',
+      destroyed: 'Destroyed',
+      placed: 'Placed',
+      tilled: 'Farmlands Tilled',
+      planted: 'Planted',
+      harvested: 'Harvested',
+      overworldMined: 'Overworld Mined',
+      netherMined: 'Nether Mined',
+      fished: 'Fished',
+      hooked: 'Number of Hook Entities',
+      ate: 'Food Eaten',
+      totem: 'Totem of Undying Used',
+      chat: 'Number of Chats',
+      chatChars: 'Chat Characters',
+      jumped: 'Jumps',
+      expObtained: 'Exp Obtained',
+      highestLevel: 'Highest Level',
+      playTime: 'Time Played',
+      lastOnline: 'Last Online',
+      loginDays: 'Login Days',
+      distanceMoved: 'Distance Moved',
+      subStats: {
+        ate: {
+          'minecraft:golden_apple': 'Golden Apple',
+          'minecraft:enchanted_golden_apple': 'Enchanted Golden Apple'
+        },
+        killed: {
+          'equus': 'Equus',
+          'minecraft:horse': 'Horse',
+          'minecraft:skeleton_horse': 'Skeleton Horse',
+          'minecraft:zombie_horse': 'Zombie Horse',
+          'minecraft:donkey': 'Donkey',
+          'minecraft:mule': 'Mule',
+          'minecraft:wandering_trader': 'Wandering Trader',
+          'minecraft:trader_llama': 'Trader Llama',
+          'minecraft:iron_golem': 'Iron Golem',
+          'minecraft:warden': 'Warden',
+          'minecraft:wither': 'Wither',
+          'minecraft:ender_dragon': 'Ender Dragon',
+        },
+        fished: {
+          'fish': 'Fish',
+          'junk': 'Junk',
+          'treasure': 'Treasure'
+        },
+        planted: {
+          'minecraft:wheat': 'Wheat Seeds',
+          'minecraft:potatoes': 'Potato',
+          'minecraft:carrots': 'Carrot',
+          'minecraft:melon_stem': 'Melon Seeds',
+          'minecraft:pumpkin_stem': 'Pumpkin Seeds',
+          'minecraft:beetroot': 'Beetroot Seeds',
+          'minecraft:pitcher_crop': 'Pitcher Pods',
+          'minecraft:torchflower_crop': 'Torchflower Seeds',
+          'minecraft:nether_wart': 'Nether Wart',
+          'minecraft:cocoa': 'Cocoa Beans'
+        },
+        harvested: {
+          'minecraft:wheat': 'Wheat',
+          'minecraft:potatoes': 'Potatoes',
+          'minecraft:carrots': 'Carrotes',
+          'minecraft:beetroot': 'Beetroot',
+          'minecraft:pitcher_crop': 'Pitcher',
+          'minecraft:torchflower_crop': 'Torchflower',
+          'minecraft:pumpkin': 'Pumpkin',
+          'minecraft:melon_block': 'Melon',
+          'minecraft:nether_wart': 'Nether Wart',
+          'minecraft:cocoa': 'Cocoa'
+        },
+        overworldMined: {
+          'minecraft:coal_ore': 'Coal Ore',
+          'minecraft:deepslate_coal_ore': 'Deepslate Coal Ore',
+          'minecraft:iron_ore': 'Iron Ore',
+          'minecraft:deepslate_iron_ore': 'Deepslate Iron Ore',
+          'minecraft:copper_ore': 'Copper Ore',
+          'minecraft:deepslate_copper_ore': 'Deepslate Copper Ore',
+          'minecraft:lapis_ore': 'Lapis Ore',
+          'minecraft:deepslate_lapis_ore': 'Deepslate Lapis Ore',
+          'minecraft:gold_ore': 'Gold Ore',
+          'minecraft:deepslate_gold_ore': 'Deepslate Gold Ore',
+          'minecraft:redstone_ore': 'Redstone Ore',
+          'minecraft:deepslate_redstone_ore': 'Deepslate Redstone Ore',
+          'minecraft:diamond_ore': 'Diamond Ore',
+          'minecraft:deepslate_diamond_ore': 'Deepslate Diamond Ore',
+          'minecraft:emerald_ore': 'Emerald Ore',
+          'minecraft:deepslate_emerald_ore': 'Deepslate Emerald Ore'
+        },
+        netherMined: {
+          'minecraft:quartz_ore': 'Quartz Ore',
+          'minecraft:nether_gold_ore': 'Nether Gold Ore',
+          'minecraft:ancient_debris': 'Ancient Debris'
+        },
+        distanceMoved: {
+          'aviate': 'By Elytra',
+          'minecraft:boat': 'By Boat',
+          'minecraft:chest_boat': 'By Chest Boat',
+          'minecraft:minecart': 'By Minecart',
+          'equus': 'By Equus',
+          'minecraft:horse': 'By Horse',
+          'minecraft:skeleton_horse': 'By Skeleton Horse',
+          'minecraft:zombie_horse': 'By Zombie Horse',
+          'minecraft:donkey': 'By Donkey',
+          'minecraft:mule': 'By Mule',
+          'minecraft:pig': 'By Pig',
+          'minecraft:strider': 'By Strider'
         }
       }
     }
