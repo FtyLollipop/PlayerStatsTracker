@@ -231,7 +231,7 @@ const tStrings = {
       chat: 'Number of Chats',
       chatChars: 'Chat Characters',
       jumped: 'Jumps',
-      expObtained: 'Exp Obtained',
+      expObtained: 'Experience Obtained',
       highestLevel: 'Highest Level',
       playTime: 'Time Played',
       lastOnline: 'Last Online',
