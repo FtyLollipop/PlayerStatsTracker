@@ -28,13 +28,14 @@
 
 ```json
 {
-  "timezone": { // 时区
-    "auto": true, // 是否使用系统时区，true为是，false为否
-    "offset": 8 // 时区偏移小时数，仅支持整数，仅在不使用系统时区时生效
-  },
-  "backupLocation": "./plugins/PlayerStatsTracker/backups", // 数据库备份位置
-  "exportLocation": "./plugins/PlayerStatsTracker/exports", // 数据导出位置
-  "databaseSaveInterval": 10000 // 数据库保存间隔时间（毫秒）
+    "language": "zh_CN", // 语言，可选中文(zh_CN)或英文(en_US)
+    "timezone": { // 时区
+        "auto": true, // 是否使用系统时区，true为是，false为否
+        "offset": 8 // 时区偏移小时数，仅支持整数，仅在不使用系统时区时生效
+    },
+    "backupLocation": "./plugins/PlayerStatsTracker/backups", // 数据库备份位置
+    "exportLocation": "./plugins/PlayerStatsTracker/exports", // 数据导出位置
+    "databaseSaveInterval": 10000 // 数据库保存间隔时间（毫秒）
 }
 ```
 
