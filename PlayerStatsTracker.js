@@ -1046,6 +1046,7 @@ function formatStats(stats, colorful) {
     }
     str += '\n'
   }
+  str = str.substring(0, str.length - 2)
   return colorful ? str : str.replace(reg, '')
 }
 
