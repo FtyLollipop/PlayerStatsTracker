@@ -176,7 +176,7 @@ const tStrings = {
   'en_US': {
     stats: 'Stats',
     ranking: 'Ranking',
-    playerName: 'Player name',
+    playerName: 'Player Name',
     commands: {
       stats: {
         description: 'View statistics',
@@ -925,7 +925,7 @@ function showRanking(player) {
   let optionsForm = mc.newSimpleForm()
   let subOptionsForm = null
   let subOptionsFormId = -1
-  optionsForm.setTitle(tStrings.statsCategories.ranking)
+  optionsForm.setTitle(tStrings.ranking)
   for (let i = 0; i < rankingKeys.length; i++) {
     optionsForm.addButton(rankingKeys[i].text)
   }
@@ -936,7 +936,7 @@ function showRanking(player) {
     const keyItem = rankingKeys[id]
     subOptionsFormId = id
     subOptionsForm = mc.newSimpleForm()
-    subOptionsForm.setTitle(`${tStrings.statsCategories.ranking} - ${keyItem.text}`)
+    subOptionsForm.setTitle(`${tStrings.ranking} - ${keyItem.text}`)
     for (let i = 0; i < keyItem.keys.length; i++) {
       subOptionsForm.addButton(keyItem.keys[i].text)
     }
@@ -949,7 +949,7 @@ function showRanking(player) {
     } else {
       const keyItem = rankingKeys[subOptionsFormId].keys[id]
       let rankingForm = mc.newSimpleForm()
-      rankingForm.setTitle(`${tStrings.statsCategories.ranking} - ${keyItem.text}`)
+      rankingForm.setTitle(`${tStrings.ranking} - ${keyItem.text}`)
       if (keyItem.key === 'playTime') {
         rankingForm.setContent(formatRanking(db.getRanking(keyItem.key), true, secToTime))
       } else if (['distanceMoved', 'damageTaken', 'damageDealt'].includes(keyItem.key)) {
@@ -988,10 +988,9 @@ function dateToDateString(date, format = 'YYYY-MM-DD') {
   let M = null
   let D = null
   if (autoTimezone) {
-    const timeObj = system.getTimeObj()
-    Y = timeObj.Y
-    M = timeObj.M
-    D = timeObj.D
+    Y = date.getFullYear()
+    M = date.getMonth() + 1
+    D = date.getDate()
   } else {
     const h = date.getUTCHours() + parseInt(timezoneOffset)
     let dateObj = date
@@ -1012,10 +1011,9 @@ function dateToTimeString(date, format = 'hh:mm:ss') {
   let m = null
   let s = null
   if (autoTimezone) {
-    const timeObj = system.getTimeObj()
-    h = timeObj.h
-    m = timeObj.m
-    s = timeObj.s
+    h = date.getHours()
+    m = date.getMinutes()
+    s = date.getSeconds()
   } else {
     h = date.getUTCHours() + parseInt(timezoneOffset)
     m = date.getUTCMinutes()
