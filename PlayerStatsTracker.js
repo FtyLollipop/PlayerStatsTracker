@@ -743,6 +743,8 @@ for (let i = 0; i < rankingKeys.length; i++) {
   rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
 }
 
+const scoreboardMappingKeysExcept = ['lastOnline']
+
 let db
 let newFarmlands = new Set()
 let cakesAten = new Set()
@@ -837,27 +839,108 @@ command3.setCallback((cmd, origin, output, results) => {
 })
 command3.setup()
 
-let command4 = mc.newCommand('statsbackup', '备份统计信息数据库', PermType.GameMasters)
+let command4 = mc.newCommand('statsbackup', tStrings.commands.statsbackup.description, PermType.GameMasters)
 command4.overload([])
 command4.setCallback((cmd, origin, output, results) => {
   if (db.dbBackup()) {
-    output.success('数据库备份完成')
+    output.success(tStrings.commands.statsbackup.success)
   } else {
-    output.error('数据库备份失败')
+    output.error(tStrings.commands.statsbackup.failed)
   }
 })
 command4.setup()
 
-let command5 = mc.newCommand('statsexport', '导出统计信息', PermType.Console)
+let command5 = mc.newCommand('statsexport', tStrings.commands.statsexport.description, PermType.Console)
 command5.overload([])
 command5.setCallback((cmd, origin, output, results) => {
   if (exportStats()) {
-    output.success('统计信息导出完成')
+    output.success(tStrings.commands.statsexport.success)
   } else {
-    output.error('统计信息导出失败')
+    output.error(tStrings.commands.statsexport.failed)
   }
 })
 command5.setup()
+
+let command6 = mc.newCommand('statstoscoreboard', '统计信息映射到计分板', PermType.GameMasters)
+command6.setEnum('list', ['list'])
+command6.setEnum('add', ['add'])
+command6.setEnum('delete', ['delete'])
+command6.setEnum('reload', ['reaload'])
+command6.setEnum('reloadall', ['realoadall'])
+command6.setEnum('option', ['mapping', 'keys'])
+command6.mandatory('list', ParamType.Enum, 'list', 'list')
+command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
+command6.mandatory('add', ParamType.Enum, 'add', 'add')
+command6.mandatory('delete', ParamType.Enum, 'delete', 'delete')
+command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
+command6.mandatory('delete', ParamType.Enum, 'reloadall', 'reloadall')
+command6.mandatory('objective', ParamType.String)
+command6.mandatory('key', ParamType.String)
+command6.overload([])
+command6.overload(['list', 'option'])
+command6.overload(['add', 'objective', 'key'])
+command6.overload(['delete', 'objective'])
+command6.overload(['reload', 'objective'])
+command6.overload(['reloadall'])
+command6.setCallback((cmd, origin, output, results) => {
+  const scoreboardMappings = db.getScoreboards()
+  const iterator = scoreboardMappings[Symbol.iterator]()
+  if (!origin.player && !results.list && !results.add && !results.delete) {
+    output.error('请指定操作')
+  } else if (results.list) { // 列出映射或统计键名
+    if (results.option === 'mapping') {
+      if (scoreboardMappings.size === 0) {
+        output.success('当前不存在任何映射')
+      } else {
+        let str = '已映射的计分项：'
+        for (const item of iterator) {
+          str += `\n${item[0]} -> ${item[1]}`
+        }
+        output.success(str)
+      }
+    } else if (results.option === 'keys') {
+      let str = '可映射的键名：'
+      for (let i = 0; i < rankingKeyList.length; i++) {
+        if (!scoreboardMappingKeysExcept.includes(rankingKeyList[i])) {
+          str += `\n${rankingKeyList[i].key} : ${rankingKeyList[i].text}`
+        }
+      }
+      output.success(str)
+    }
+  } else if (results.add) { // 添加映射
+    const allObjectives = mc.getAllScoreObjectives()
+    if (scoreboardMappings.has(results.objective)) {
+      output.error('该计分项已存在映射')
+    } else if (!allObjectives.map(item => item.name).includes(results.objective)) {
+      output.error('该计分项不存在')
+    } else if (!rankingKeyList.map(item => item.key).includes(results.key) || scoreboardMappingKeysExcept.includes(results.key)) {
+      output.error('该键名不存在')
+    } else {
+      db.addScoreboard(results.objective, results.key)
+      output.success('添加映射完成')
+    }
+  } else if (results.delete) { // 删除映射
+    if (!scoreboardMappings.has(results.objective)) {
+      output.error('该计分项不存在映射')
+    } else {
+      db.deleteScoreboard(results.objective)
+      output.success('已删除计分项映射')
+    }
+  } else if (results.reload) { // 重载计分项
+    if (!scoreboardMappings.has(results.objective)) {
+      output.error('该计分项不存在映射')
+    } else {
+      db.reloadScoreboard(results.objective)
+      output.success('计分板映射重载完成')
+    }
+  } else if (results.reloadall) { // 重载所有计分项
+    db.reloadAllScoreboards()
+    output.success('计分板映射重载完成')
+  } else {
+    showScoreboard(origin.player)
+  }
+})
+command6.setup()
 // ↑ 命令注册 ======================================================================
 
 // ↓ API ======================================================================
@@ -964,6 +1047,10 @@ function showRanking(player) {
   function rankingFormHandler(player, data) {
     player.sendForm(subOptionsForm, subOptionsFormHandler)
   }
+}
+
+function showScoreboard(player) {
+
 }
 // ↑ 游戏内菜单 ======================================================================
 
@@ -1406,15 +1493,6 @@ mc.listen('onExperienceAdd', (player, exp) => {
   }
 })
 
-// 弹射物创建完毕
-// mc.listen('onProjectileCreated', (shooter, entity) => {
-//   if (shooter?.isPlayer() && entity.type === 'minecraft:ender_pearl') {
-//     const pl = shooter.toPlayer()
-//     if (!pl.isSimulatedPlayer()) {
-//     }
-//   }
-// })
-
 // 钓鱼
 mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
   if (player.isSimulatedPlayer()) { return }
@@ -1445,6 +1523,7 @@ class DataBase {
   #mountQueue
   #unmountQueue
   #backupLocation
+  #scoreboards
 
   #saveTimer
 
@@ -1464,7 +1543,8 @@ class DataBase {
     if (!this.#kvdb.get('data')) {
       this.#kvdb.set('data', {
         lastUpdate: Date.now(),
-        placedBlocks: []
+        placedBlocks: [],
+        scoreboards: []
       })
     } else {
       if (this.#kvdb.get('data').lastUpdate > Date.now()) {
@@ -1472,7 +1552,8 @@ class DataBase {
         return null
       }
     }
-    this.#placedBlocks = new Set(this.#kvdb.get('data').placedBlocks)
+    this.#placedBlocks = new Set(this.#kvdb.get('data').placedBlocks || [])
+    this.#scoreboards = new Map(this.#kvdb.get('data').scoreboards || [])
     this.#createSaveTimer()
   }
 
@@ -1526,6 +1607,7 @@ class DataBase {
     }
     let data = this.#kvdb.get('data')
     data.placedBlocks = Array.from(this.#placedBlocks)
+    data.scoreboards = Array.from(this.#scoreboards)
     data.lastUpdate = Date.now()
     this.#kvdb.set('data', data)
   }
@@ -1536,7 +1618,11 @@ class DataBase {
       this.#kvdb.set(key, value)
       this.#db.delete(key)
     }
-    this.#dbUpdateTime()
+    let data = this.#kvdb.get('data')
+    data.placedBlocks = Array.from(this.#placedBlocks)
+    data.scoreboards = Array.from(this.#scoreboards)
+    data.lastUpdate = Date.now()
+    this.#kvdb.set('data', data)
   }
 
   // 挂载并获取玩家
@@ -1591,6 +1677,72 @@ class DataBase {
     return this.#dataAssign(this.#playerDataTemplate, playerData)
   }
 
+  // 获取计分板
+  getScoreboards() {
+    return this.#scoreboards
+  }
+
+  // 通过统计键名获取计分项
+  #getScoreboardsByKey(key) {
+    let objectiveList = []
+    for (let [objectiveValue, keyValue] of this.#scoreboards) {
+      if (keyValue === key) {
+        objectiveList.push(objectiveValue)
+      }
+    }
+    return objectiveList
+  }
+
+  // 添加计分板
+  addScoreboard(objective, key) {
+    if (!this.#scoreboards.has(objective)) {
+      this.#scoreboards.set(objective, key)
+      this.reloadScoreboard(objective)
+      return true
+    } else {
+      return false
+    }
+  }
+
+  // 删除计分板
+  deleteScoreboard(objective) {
+    this.#scoreboards.delete(objective)
+    return true
+  }
+
+  // 设置计分项数据
+  #setScoreboard(objective, name, value) {
+    if (!this.#scoreboards.has(objective)) {
+      return false
+    } else {
+      const scoreboardObjective = mc.getScoreObjective(objective)
+      if (scoreboardObjective == null) {
+        this.#scoreboards.delete(objective)
+        return false
+      } else {
+        mc.setPlayerScore(data.name2uuid(name), objective, value)
+      }
+    }
+  }
+
+  reloadScoreboard(objective) {
+    const key = this.#scoreboards.get(objective)
+    const players = this.getPlayerList()
+    for (let i = 0; i < players.length; i++) {
+      this.#setScoreboard(objective, players[i], this.get(players[i], key))
+    }
+  }
+
+  reloadAllScoreboards() {
+    const players = this.getPlayerList()
+    const iterator = this.#scoreboards[Symbol.iterator]()
+    for (const item of iterator) {
+      for (let i = 0; i < players.length; i++) {
+        this.#setScoreboard(item[0], players[i], this.get(players[i], item[1]))
+      }
+    }
+  }
+
   // 获取方块放置记录
   getPlacedBlocks() {
     return this.#placedBlocks
@@ -1611,10 +1763,16 @@ class DataBase {
     return this.#placedBlocks.has([intPos.x, ',', intPos.y, ',', intPos.z, ',', intPos.dimid].join(''))
   }
 
+  // 获取有数据的玩家列表
+  getPlayerList() {
+    const playerSet = new Set([...this.#kvdb.listKey(), ...this.#db.keys()])
+    playerSet.delete('data')
+    return Array.from(playerSet)
+  }
+
   // 查询是否有该玩家的数据
   hasPlayer(name) {
-    const names = new Set([...this.#kvdb.listKey(), ...this.#db.keys()])
-    return names.has(name)
+    return this.getPlayerList().includes(name)
   }
 
   // 获取玩家某一项统计
@@ -1632,15 +1790,14 @@ class DataBase {
     return this.#dbQuery(name)
   }
 
+  // 获取所有玩家的统计
   getPlayers() {
-    let namesSet = null
+    let names = null
     if (this.#backupFlag) {
-      namesSet = new Set(this.#db.keys())
+      namesSet = Array.from(this.#db.keys())
     } else {
-      namesSet = new Set([...this.#kvdb.listKey(), ...this.#db.keys()])
+      namesSet = this.getPlayerList()
     }
-    namesSet.delete('data')
-    const names = Array.from(namesSet)
     let statsArray = []
     for (let i = 0; i < names.length; i++) {
       statsArray.push({ name: names[i], data: this.getPlayer(names[i]) })
@@ -1687,9 +1844,7 @@ class DataBase {
       }
       return items
     }
-    const namesSet = new Set([...this.#kvdb.listKey(), ...this.#db.keys()])
-    namesSet.delete('data')
-    const names = Array.from(namesSet)
+    const names = this.getPlayerList()
     let ranking = []
     for (let i = 0; i < names.length; i++) {
       ranking.push({ name: names[i], data: this.getPlayer(names[i])[key] })
@@ -1713,7 +1868,9 @@ class DataBase {
       default:
         return false
     }
-    this.#db.set(name, playerData)
+    this.#getScoreboardsByKey(key).forEach(ob => {
+      this.#setScoreboard(ob, name, playerData[key])
+    })
     return true
   }
 
@@ -1733,12 +1890,6 @@ class DataBase {
       default:
         return false
     }
-    this.#db.set(name, playerData)
-    return true
-  }
-
-  // 设置玩家所有统计
-  setPlayer(name, playerData) {
     this.#db.set(name, playerData)
     return true
   }
