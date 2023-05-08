@@ -747,6 +747,13 @@ for (let i = 0; i < rankingKeys.length; i++) {
 }
 
 const scoreboardMappingKeysExcept = ['lastOnline']
+let scoreboardMappingKeys = []
+
+for (let i = 0; i < rankingKeyList.length; i++) {
+  if (!scoreboardMappingKeysExcept.includes(rankingKeyList[i])) {
+    scoreboardMappingKeys.push(rankingKeyList[i])
+  }
+}
 
 let db
 let newFarmlands = new Set()
@@ -824,7 +831,7 @@ command3.setCallback((cmd, origin, output, results) => {
       }
       output.success(tStrings.commands.ranking.useCommandToQuery + keysStr)
     } else {
-      if (rankingKeyList.length - 1 > results.number) {
+      if (rankingKeyList.length <= results.number || results.number < 0) {
         let rankingStr = ''
         if (rankingKeyList[results.number].key === 'playTime') {
           rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
@@ -870,7 +877,7 @@ command6.setEnum('add', ['add'])
 command6.setEnum('remove', ['remove'])
 command6.setEnum('reload', ['reaload'])
 command6.setEnum('reloadall', ['realoadall'])
-command6.setEnum('option', ['mapping', 'keys'])
+command6.setEnum('option', ['mapping', 'number'])
 command6.mandatory('list', ParamType.Enum, 'list', 'list')
 command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
 command6.mandatory('add', ParamType.Enum, 'add', 'add')
@@ -878,10 +885,10 @@ command6.mandatory('remove', ParamType.Enum, 'remove', 'remove')
 command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
 command6.mandatory('reloadall', ParamType.Enum, 'reloadall', 'reloadall')
 command6.mandatory('objective', ParamType.String)
-command6.mandatory('key', ParamType.String)
+command6.mandatory('number', ParamType.Int)
 command6.overload([])
 command6.overload(['list', 'option'])
-command6.overload(['add', 'objective', 'key'])
+command6.overload(['add', 'objective', 'number'])
 command6.overload(['remove', 'objective'])
 command6.overload(['reload', 'objective'])
 command6.overload(['reloadall'])
@@ -901,12 +908,10 @@ command6.setCallback((cmd, origin, output, results) => {
         }
         output.success(str)
       }
-    } else if (results.option === 'keys') {
-      let str = '可映射的键名：'
-      for (let i = 0; i < rankingKeyList.length; i++) {
-        if (!scoreboardMappingKeysExcept.includes(rankingKeyList[i])) {
-          str += `\n${rankingKeyList[i].key} : ${rankingKeyList[i].text}`
-        }
+    } else if (results.option === 'number') {
+      let str = '可映射的编号：'
+      for (let i = 0; i < scoreboardMappingKeys.length; i++) {
+        str += `\n${i}. ${scoreboardMappingKeys[i].text}`
       }
       output.success(str)
     }
@@ -916,10 +921,10 @@ command6.setCallback((cmd, origin, output, results) => {
       output.error('该计分项已存在映射')
     } else if (!allObjectives.map(item => item.name).includes(results.objective)) {
       output.error('该计分项不存在')
-    } else if (!rankingKeyList.map(item => item.key).includes(results.key) || scoreboardMappingKeysExcept.includes(results.key)) {
-      output.error('该键名不存在')
+    } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
+      output.error('该编号不存在')
     } else {
-      db.addScoreboard(results.objective, results.key)
+      db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)
       output.success('添加映射完成')
     }
   } else if (results.remove) { // 删除映射
@@ -981,7 +986,6 @@ function getRanking(key) {
   } else {
     return null
   }
-
 }
 
 function getRankingKeyList() {
@@ -1054,6 +1058,9 @@ function showRanking(player) {
 
 function showMapping(player) {
   let optionsForm = mc.newSimpleForm()
+  let addObjectiveArray = []
+  let addKeyArray = []
+  let deleteObjectiveArray = []
   optionsForm.setTitle('统计信息映射到计分板')
   optionsForm.addButton('查看映射')
   optionsForm.addButton('添加映射')
@@ -1072,27 +1079,53 @@ function showMapping(player) {
         listForm.setTitle('已映射的计分项')
         let str = ''
         for (const item of iterator) {
-          str += `${item[0]} -> ${item[1]}\n`
+          str += `${item[0]} -> ${getTextByKey(item[1])}\n`
         }
         str = str === '' ? '当前不存在任何映射' : str.substring(0, str.length - 1)
         listForm.setContent(str)
         player.sendForm(listForm, listFormHandler)
         break
       case 1:
+        const objectiveArray = mc.getAllScoreObjectives()
+        const mappingArray = Array.from(scoreboardMappings).map(item => item[0])
+        let objectiveStringArray = []
+        let keyStringArray = []
+        addObjectiveArray = []
+        addKeyArray = []
+        for (let i = 0; i < objectiveArray.length; i++) {
+          if (!mappingArray.includes(objectiveArray[i].name)) {
+            objectiveStringArray.push(`${objectiveArray[i].name} : ${objectiveArray[i].displayName}`)
+            addObjectiveArray.push(objectiveArray[i].name)
+          }
+        }
+        if (objectiveArray.length === 0) {
+          player.sendToast('统计信息映射到计分板', '当前无未映射的计分项')
+          break
+        }
+        for (let i = 0; i < rankingKeyList.length; i++) {
+          if (!scoreboardMappingKeysExcept.includes(rankingKeyList[i])) {
+            keyStringArray.push(rankingKeyList[i].text)
+          }
+        }
         let addForm = mc.newCustomForm()
         addForm.setTitle('添加映射')
-        addForm.addLabel('计分项')
-        addFrom.addDropdown()
+        addForm.addDropdown('计分项', objectiveStringArray)
         addForm.addLabel('映射到')
-        addForm.addLabel('统计信息')
-        addFrom.addDropdown()
+        addForm.addDropdown('统计信息', keyStringArray)
+        addForm.addLabel('')
         player.sendForm(addForm, addFormHandler)
         break
       case 2:
+        let mappingStringArray = []
+        deleteObjectiveArray = []
+        for (const item of iterator) {
+          mappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          deleteObjectiveArray.push(item[0])
+        }
         let removeForm = mc.newCustomForm()
         removeForm.setTitle('删除映射')
-        removeForm.addLabel('计分项')
-        removeForm.addDropdown()
+        removeForm.addDropdown('映射',mappingStringArray)
+        removeForm.addLabel('')
         player.sendForm(removeForm, removeFormHandler)
         break
       case 3:
@@ -1117,7 +1150,11 @@ function showMapping(player) {
     if (data == null) {
       player.sendForm(optionsForm, optionsFormHandler)
     }
-    player.sendToast('统计信息映射到计分板', '映射添加完成')
+    if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[2]].key)) {
+      player.sendToast('统计信息映射到计分板', '映射添加完成')
+    } else {
+      player.sendToast('统计信息映射到计分板', '映射添加失败')
+    }
     player.sendForm(optionsForm, optionsFormHandler)
   }
 
@@ -1125,7 +1162,11 @@ function showMapping(player) {
     if (data == null) {
       player.sendForm(optionsForm, optionsFormHandler)
     }
-    player.sendToast('统计信息映射到计分板', '映射删除完成')
+    if (db.deleteScoreboard(addObjectiveArray[data[0]])) {
+      player.sendToast('统计信息映射到计分板', '映射删除完成')
+    } else {
+      player.sendToast('统计信息映射到计分板', '映射删除失败')
+    }
     player.sendForm(optionsForm, optionsFormHandler)
   }
 
@@ -1208,6 +1249,15 @@ function dateToTimeString(date, format = 'hh:mm:ss') {
   return format.replace('hh', h < 10 ? '0' + h : h).replace('mm', m < 10 ? '0' + m : m).replace('ss', s < 10 ? '0' + s : s).replace('h', h).replace('m', m).replace('s', s)
 }
 
+function getTextByKey(key) {
+  for (let i = 0; i < rankingKeyList.length; i++) {
+    if (rankingKeyList[i].key === key) {
+      return rankingKeyList[i].text
+    }
+  }
+  return null
+}
+
 function formatStats(stats, colorful) {
   const reg = /§./g
   const statsFormattedList = statsToFormattedList(stats)
@@ -1262,10 +1312,6 @@ function formatRanking(ranking, colorful, func = str => str) {
     }
   }
   return colorful ? str : str.replace(reg, '')
-}
-
-function formatMapping() {
-
 }
 
 function exportStats() {
