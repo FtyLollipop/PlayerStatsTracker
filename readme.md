@@ -12,6 +12,42 @@
 
 最后经验证支持的BDS版本：1.19.81.01
 
+## 使用
+
+### 游戏内菜单
+
+`/stats [player]` 打开统计信息面板
+
+- `[player]` 要查询的玩家名称，为空时为自己
+
+`/ranking` 打开排行榜面板
+
+`/statstoscoreboard` 打开计分板映射面板
+
+### 命令
+
+`/stats <player>` 查看玩家统计信息
+
+`/ranking [number]` 查看排行榜
+
+`/statsdelete <player>` 删除玩家所有统计信息
+
+`/statsexport `导出统计信息到csv文件
+
+`/statsbackup` 备份统计信息数据库
+
+`/statstoscoreboard list mapping` 查看计分板映射列表
+
+`/statstoscoreboard list keys `查看映射可用的统计项键名列表
+
+`/statstoscoreboard add <objective> <key>` 添加计分板映射
+
+`/statstoscoreboard delete <objective> `删除计分板映射
+
+`/statstoscoreboard reload <objective> `重载计分板映射
+
+`/statstoscoreboard reloadall `重载全部计分板映射
+
 ## 安装
 
 1. 安装LiteLoaderBDS。
