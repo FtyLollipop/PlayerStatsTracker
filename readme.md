@@ -2,51 +2,65 @@
 
 基本功能：
 
-1. 持续统计多种玩家信息
-2. 使用/stats [player]命令打开统计信息面板（只有OP或控制台可以查询其他玩家的统计信息）
-3. 使用/ranking命令打开排行榜面板
-4. 使用/statsdelete \<player>命令删除玩家所有统计信息（仅限控制台）
-5. 使用/statsexport命令导出统计信息到csv（仅限控制台）
-6. 使用/statsbackup命令进行数据库备份（OP或控制台）
-7. 一些API导出可供其他插件使用
+- 持续统计多种玩家信息
+- 查看玩家统计信息
+- 查看排行榜
+- 删除玩家所有统计信息
+- 映射统计信息到计分板
+- 导出统计信息到csv
+- 数据库备份
+- 一些API导出可供其他插件使用
 
 最后经验证支持的BDS版本：1.19.81.01
 
-## 使用
+## 基本使用
 
-### 游戏内菜单
+### 菜单（游戏内使用）
 
-`/stats [player]` 打开统计信息面板
+`/stats [player]` 打开统计信息菜单
 
 - `[player]` 要查询的玩家名称，为空时为自己
 
-`/ranking` 打开排行榜面板
+`/ranking` 打开排行榜菜单
 
-`/statstoscoreboard` 打开计分板映射面板
+`/statstoscoreboard` 打开计分板映射菜单
 
-### 命令
+### 命令（控制台使用）
 
 `/stats <player>` 查看玩家统计信息
 
+- `<player>` 要查询的玩家名称
+
 `/ranking [number]` 查看排行榜
+
+- `[number]` 要查询的排行榜编号，为空时列出所有可用编号
 
 `/statsdelete <player>` 删除玩家所有统计信息
 
-`/statsexport `导出统计信息到csv文件
+- `<player>` 要删除的玩家名称
+
+`/statsexport ` 导出统计信息到csv文件
 
 `/statsbackup` 备份统计信息数据库
 
 `/statstoscoreboard list mapping` 查看计分板映射列表
 
-`/statstoscoreboard list keys `查看映射可用的统计项键名列表
+`/statstoscoreboard list keys ` 查看映射可用的统计信息键名列表
 
 `/statstoscoreboard add <objective> <key>` 添加计分板映射
 
-`/statstoscoreboard delete <objective> `删除计分板映射
+- `<objective>` 要添加映射的计分项
+- `<key>` 要映射到的统计信息键名
 
-`/statstoscoreboard reload <objective> `重载计分板映射
+`/statstoscoreboard delete <objective> ` 删除计分板映射
 
-`/statstoscoreboard reloadall `重载全部计分板映射
+- `<objective>` 要删除映射的计分项
+
+`/statstoscoreboard reload <objective> ` 重载计分板映射
+
+- `<objective>` 要重载的计分项
+
+`/statstoscoreboard reloadall ` 重载全部计分板映射
 
 ## 安装
 
