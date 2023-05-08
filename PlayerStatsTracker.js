@@ -177,7 +177,7 @@ const tStrings = {
     }
   },
   'en_US': {
-    stats: 'Stats',
+    stats: 'Statistics',
     ranking: 'Ranking',
     playerName: 'Player Name',
     commands: {
@@ -1058,6 +1058,8 @@ function showMapping(player) {
   optionsForm.addButton('查看映射')
   optionsForm.addButton('添加映射')
   optionsForm.addButton('删除映射')
+  optionsForm.addButton('重载映射')
+  optionsForm.addButton('重载全部映射')
   player.sendForm(optionsForm, optionsFormHandler)
 
   function optionsFormHandler(player, id) {
@@ -1093,6 +1095,17 @@ function showMapping(player) {
         removeForm.addDropdown()
         player.sendForm(removeForm, removeFormHandler)
         break
+      case 3:
+        let reloadForm = mc.newCustomForm()
+        reloadForm.setTitle('重载映射')
+        reloadForm.addLabel('当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复')
+        reloadForm.addLabel('计分项')
+        reloadForm.addDropdown()
+        player.sendForm(reloadForm, reloadFormHandler)
+        break
+      case 4:
+        player.sendModalForm('重载全部映射', '当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复。当映射的计分项过多时，重载全部映射可能导致性能问题，确定要重载全部映射吗？', '确定', '取消', reloadAllFormHandler)
+        break
     }
   }
 
@@ -1114,6 +1127,23 @@ function showMapping(player) {
     }
     player.sendToast('统计信息映射到计分板', '映射删除完成')
     player.sendForm(optionsForm, optionsFormHandler)
+  }
+
+  function reloadFormHandler(player, data) {
+    if (data == null) {
+      player.sendForm(optionsForm, optionsFormHandler)
+    }
+    player.sendToast('统计信息映射到计分板', '映射重载完成')
+    player.sendForm(optionsForm, optionsFormHandler)
+  }
+
+  function reloadAllFormHandler(player, result) {
+    if (result === true) {
+      player.sendToast('统计信息映射到计分板', '映射重载完成')
+      player.sendForm(optionsForm, optionsFormHandler)
+    } else {
+      player.sendForm(optionsForm, optionsFormHandler)
+    }
   }
 }
 // ↑ 游戏内菜单 ======================================================================

@@ -23,7 +23,7 @@
 
 `/ranking` 打开排行榜菜单
 
-`/statstoscoreboard` 打开计分板映射菜单
+`/statsmapping` 打开计分板映射菜单
 
 ### 命令（控制台使用）
 
@@ -43,24 +43,24 @@
 
 `/statsbackup` 备份统计信息数据库
 
-`/statstoscoreboard list mapping` 查看计分板映射列表
+`/statsmapping list mapping` 查看计分板映射列表
 
-`/statstoscoreboard list keys ` 查看映射可用的统计信息键名列表
+`/statsmapping list keys ` 查看映射可用的统计信息键名列表
 
-`/statstoscoreboard add <objective> <key>` 添加计分板映射
+`/statsmapping add <objective> <key>` 添加计分板映射
 
 - `<objective>` 要添加映射的计分项
 - `<key>` 要映射到的统计信息键名
 
-`/statstoscoreboard delete <objective> ` 删除计分板映射
+`/statsmapping remove <objective> ` 删除计分板映射
 
 - `<objective>` 要删除映射的计分项
 
-`/statstoscoreboard reload <objective> ` 重载计分板映射
+`/statsmapping reload <objective> ` 重载计分板映射
 
 - `<objective>` 要重载的计分项
 
-`/statstoscoreboard reloadall ` 重载全部计分板映射
+`/statsmapping reloadall ` 重载全部计分板映射
 
 ## 安装
 
