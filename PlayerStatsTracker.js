@@ -51,6 +51,9 @@ const tStrings = {
         description: '查看排行榜',
         useCommandToQuery: '请使用"ranking <编号>"来查询某一项统计数据的排行榜',
         noSuchNumber: '无此编号的排行榜'
+      },
+      statsmapping: {
+        description: '统计信息映射到计分板'
       }
     },
     statsCategories: {
@@ -861,7 +864,7 @@ command5.setCallback((cmd, origin, output, results) => {
 })
 command5.setup()
 
-let command6 = mc.newCommand('statstoscoreboard', '统计信息映射到计分板', PermType.GameMasters)
+let command6 = mc.newCommand('statsmapping', tStrings.commands.statsmapping.description, PermType.GameMasters)
 command6.setEnum('list', ['list'])
 command6.setEnum('add', ['add'])
 command6.setEnum('delete', ['delete'])
@@ -937,7 +940,7 @@ command6.setCallback((cmd, origin, output, results) => {
     db.reloadAllScoreboards()
     output.success('计分板映射重载完成')
   } else {
-    showScoreboard(origin.player)
+    showMapping(origin.player)
   }
 })
 command6.setup()
@@ -1049,8 +1052,40 @@ function showRanking(player) {
   }
 }
 
-function showScoreboard(player) {
+function showMapping(player) {
+  let optionsForm = mc.newSimpleForm()
+  optionsForm.setTitle('统计信息映射到计分板')
+  optionsForm.addButton('查看映射')
+  optionsForm.addButton('添加映射')
+  optionsForm.addButton('删除映射')
+  player.sendForm(optionsForm, optionsFormHandler)
 
+  function optionsFormHandler(player, id) {
+    if (id == null) { return }
+    switch (id) {
+      case 0:
+        let listForm = mc.newSimpleForm()
+        listForm.setTitle('已映射的计分项')
+        const scoreboardMappings = db.getScoreboards()
+        const iterator = scoreboardMappings[Symbol.iterator]()
+        let str = ''
+        for (const item of iterator) {
+          str += `${item[0]} -> ${item[1]}\n`
+        }
+        str = str === '' ? '当前不存在任何映射': str.substring(0, str.length - 1)
+        listForm.setContent(str)
+        player.sendForm(listForm, listFormHandler)
+        break
+      case 1:
+        break
+      case 2:
+        break
+    }
+  }
+
+  function listFormHandler(player, id) {
+    player.sendForm(optionsForm, optionsFormHandler)
+  }
 }
 // ↑ 游戏内菜单 ======================================================================
 
@@ -1168,6 +1203,10 @@ function formatRanking(ranking, colorful, func = str => str) {
     }
   }
   return colorful ? str : str.replace(reg, '')
+}
+
+function formatMapping() {
+
 }
 
 function exportStats() {
