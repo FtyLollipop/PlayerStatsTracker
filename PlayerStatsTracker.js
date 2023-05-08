@@ -867,28 +867,28 @@ command5.setup()
 let command6 = mc.newCommand('statsmapping', tStrings.commands.statsmapping.description, PermType.GameMasters)
 command6.setEnum('list', ['list'])
 command6.setEnum('add', ['add'])
-command6.setEnum('delete', ['delete'])
+command6.setEnum('remove', ['remove'])
 command6.setEnum('reload', ['reaload'])
 command6.setEnum('reloadall', ['realoadall'])
 command6.setEnum('option', ['mapping', 'keys'])
 command6.mandatory('list', ParamType.Enum, 'list', 'list')
 command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
 command6.mandatory('add', ParamType.Enum, 'add', 'add')
-command6.mandatory('delete', ParamType.Enum, 'delete', 'delete')
+command6.mandatory('remove', ParamType.Enum, 'remove', 'remove')
 command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
-command6.mandatory('delete', ParamType.Enum, 'reloadall', 'reloadall')
+command6.mandatory('reloadall', ParamType.Enum, 'reloadall', 'reloadall')
 command6.mandatory('objective', ParamType.String)
 command6.mandatory('key', ParamType.String)
 command6.overload([])
 command6.overload(['list', 'option'])
 command6.overload(['add', 'objective', 'key'])
-command6.overload(['delete', 'objective'])
+command6.overload(['remove', 'objective'])
 command6.overload(['reload', 'objective'])
 command6.overload(['reloadall'])
 command6.setCallback((cmd, origin, output, results) => {
   const scoreboardMappings = db.getScoreboards()
   const iterator = scoreboardMappings[Symbol.iterator]()
-  if (!origin.player && !results.list && !results.add && !results.delete) {
+  if (!origin.player && !results.list && !results.add && !results.remove) {
     output.error('请指定操作')
   } else if (results.list) { // 列出映射或统计键名
     if (results.option === 'mapping') {
@@ -922,7 +922,7 @@ command6.setCallback((cmd, origin, output, results) => {
       db.addScoreboard(results.objective, results.key)
       output.success('添加映射完成')
     }
-  } else if (results.delete) { // 删除映射
+  } else if (results.remove) { // 删除映射
     if (!scoreboardMappings.has(results.objective)) {
       output.error('该计分项不存在映射')
     } else {
@@ -1047,7 +1047,7 @@ function showRanking(player) {
     }
   }
 
-  function rankingFormHandler(player, data) {
+  function rankingFormHandler(player, id) {
     player.sendForm(subOptionsForm, subOptionsFormHandler)
   }
 }
@@ -1062,28 +1062,57 @@ function showMapping(player) {
 
   function optionsFormHandler(player, id) {
     if (id == null) { return }
+    const scoreboardMappings = db.getScoreboards()
+    const iterator = scoreboardMappings[Symbol.iterator]()
     switch (id) {
       case 0:
         let listForm = mc.newSimpleForm()
         listForm.setTitle('已映射的计分项')
-        const scoreboardMappings = db.getScoreboards()
-        const iterator = scoreboardMappings[Symbol.iterator]()
         let str = ''
         for (const item of iterator) {
           str += `${item[0]} -> ${item[1]}\n`
         }
-        str = str === '' ? '当前不存在任何映射': str.substring(0, str.length - 1)
+        str = str === '' ? '当前不存在任何映射' : str.substring(0, str.length - 1)
         listForm.setContent(str)
         player.sendForm(listForm, listFormHandler)
         break
       case 1:
+        let addForm = mc.newCustomForm()
+        addForm.setTitle('添加映射')
+        addForm.addLabel('计分项')
+        addFrom.addDropdown()
+        addForm.addLabel('映射到')
+        addForm.addLabel('统计信息')
+        addFrom.addDropdown()
+        player.sendForm(addForm, addFormHandler)
         break
       case 2:
+        let removeForm = mc.newCustomForm()
+        removeForm.setTitle('删除映射')
+        removeForm.addLabel('计分项')
+        removeForm.addDropdown()
+        player.sendForm(removeForm, removeFormHandler)
         break
     }
   }
 
   function listFormHandler(player, id) {
+    player.sendForm(optionsForm, optionsFormHandler)
+  }
+
+  function addFormHandler(player, data) {
+    if (data == null) {
+      player.sendForm(optionsForm, optionsFormHandler)
+    }
+    player.sendToast('统计信息映射到计分板', '映射添加完成')
+    player.sendForm(optionsForm, optionsFormHandler)
+  }
+
+  function removeFormHandler(player, data) {
+    if (data == null) {
+      player.sendForm(optionsForm, optionsFormHandler)
+    }
+    player.sendToast('统计信息映射到计分板', '映射删除完成')
     player.sendForm(optionsForm, optionsFormHandler)
   }
 }
