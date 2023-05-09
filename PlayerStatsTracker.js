@@ -924,15 +924,21 @@ command6.setCallback((cmd, origin, output, results) => {
     } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
       output.error('该编号不存在')
     } else {
-      db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)
-      output.success('添加映射完成')
+      if(db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)) {
+        output.success('添加映射完成')
+      } else {
+        output.failed('添加映射失败')
+      }
     }
   } else if (results.remove) { // 删除映射
     if (!scoreboardMappings.has(results.objective)) {
       output.error('该计分项不存在映射')
     } else {
-      db.deleteScoreboard(results.objective)
-      output.success('已删除计分项映射')
+      if(db.deleteScoreboard(results.objective)) {
+        output.success('删除映射完成')
+      } else {
+        output.failed('删除映射失败')
+      }
     }
   } else if (results.reload) { // 重载计分项
     if (!scoreboardMappings.has(results.objective)) {
