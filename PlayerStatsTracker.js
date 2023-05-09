@@ -1725,7 +1725,7 @@ class DataBase {
     this.#createSaveTimer()
     setInterval(() => {
       this.#validateScoreboard()
-    }, 1000)
+    }, 3000)
   }
 
   #createSaveTimer() {
@@ -1898,16 +1898,17 @@ class DataBase {
     }
   }
 
+  // 验证映射有效性
   #validateScoreboard() {
     const iterator = this.#scoreboards[Symbol.iterator]()
-    const scoreboardObjectives = mc.getAllScoreObjectives().map(item => item.name)
     for (const item of iterator) {
-      if(!scoreboardObjectives.includes(item[0])) {
+      if(!mc.getScoreObjective(item[0])) {
         this.#scoreboards.delete(item[0])
       }
     }
   }
 
+  // 重载计分板映射
   reloadScoreboard(objective) {
     const key = this.#scoreboards.get(objective)
     const players = this.getPlayerList()
@@ -1917,6 +1918,7 @@ class DataBase {
     return true
   }
 
+  // 重载全部计分板映射
   reloadAllScoreboards() {
     const players = this.getPlayerList()
     const iterator = this.#scoreboards[Symbol.iterator]()
