@@ -904,7 +904,7 @@ command6.setCallback((cmd, origin, output, results) => {
       } else {
         let str = '已映射的计分项：'
         for (const item of iterator) {
-          str += `\n${item[0]} -> ${item[1]}`
+          str += `\n${item[0]} -> ${getTextByKey(item[1])}`
         }
         output.success(str)
       }
@@ -1059,8 +1059,8 @@ function showRanking(player) {
 function showMapping(player) {
   let optionsForm = mc.newSimpleForm()
   let addObjectiveArray = []
-  let addKeyArray = []
   let deleteObjectiveArray = []
+  let reloadObjectiveArray = []
   optionsForm.setTitle('统计信息映射到计分板')
   optionsForm.addButton('查看映射')
   optionsForm.addButton('添加映射')
@@ -1116,24 +1116,34 @@ function showMapping(player) {
         player.sendForm(addForm, addFormHandler)
         break
       case 2:
-        let mappingStringArray = []
+        let deleteMappingStringArray = []
         deleteObjectiveArray = []
         for (const item of iterator) {
-          mappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          deleteMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
           deleteObjectiveArray.push(item[0])
+        }
+        if (deleteMappingStringArray.length === 0) {
+          player.sendToast('统计信息映射到计分板', '当前不存在任何映射')
+          break
         }
         let removeForm = mc.newCustomForm()
         removeForm.setTitle('删除映射')
-        removeForm.addDropdown('映射',mappingStringArray)
+        removeForm.addDropdown('映射', deleteMappingStringArray)
         removeForm.addLabel('')
         player.sendForm(removeForm, removeFormHandler)
         break
       case 3:
+        let reloadMappingStringArray = []
+        reloadObjectiveArray = []
+        for (const item of iterator) {
+          reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          deleteObjectiveArray.push(item[0])
+        }
         let reloadForm = mc.newCustomForm()
         reloadForm.setTitle('重载映射')
         reloadForm.addLabel('当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复')
-        reloadForm.addLabel('计分项')
-        reloadForm.addDropdown()
+        reloadForm.addDropdown('映射', reloadMappingStringArray)
+        reloadForm.addLabel('')
         player.sendForm(reloadForm, reloadFormHandler)
         break
       case 4:
@@ -1174,17 +1184,25 @@ function showMapping(player) {
     if (data == null) {
       player.sendForm(optionsForm, optionsFormHandler)
     }
+    if (db.reloadScoreboard(reloadObjectiveArray[data[1]])) {
+      player.sendToast('统计信息映射到计分板', '映射重载完成')
+    } else {
+      player.sendToast('统计信息映射到计分板', '映射重载失败')
+    }
     player.sendToast('统计信息映射到计分板', '映射重载完成')
     player.sendForm(optionsForm, optionsFormHandler)
   }
 
   function reloadAllFormHandler(player, result) {
     if (result === true) {
+      if (db.reloadAllScoreboards()) {
+        player.sendToast('统计信息映射到计分板', '映射重载完成')
+      } else {
+        player.sendToast('统计信息映射到计分板', '映射重载失败')
+      }
       player.sendToast('统计信息映射到计分板', '映射重载完成')
-      player.sendForm(optionsForm, optionsFormHandler)
-    } else {
-      player.sendForm(optionsForm, optionsFormHandler)
     }
+    player.sendForm(optionsForm, optionsFormHandler)
   }
 }
 // ↑ 游戏内菜单 ======================================================================
@@ -1699,6 +1717,9 @@ class DataBase {
     this.#placedBlocks = new Set(this.#kvdb.get('data').placedBlocks || [])
     this.#scoreboards = new Map(this.#kvdb.get('data').scoreboards || [])
     this.#createSaveTimer()
+    setInterval(() => {
+      this.#validateScoreboard()
+    }, 1000)
   }
 
   #createSaveTimer() {
@@ -1843,15 +1864,17 @@ class DataBase {
       this.#scoreboards.set(objective, key)
       this.reloadScoreboard(objective)
       return true
-    } else {
-      return false
     }
+    return false
   }
 
   // 删除计分板
   deleteScoreboard(objective) {
-    this.#scoreboards.delete(objective)
-    return true
+    if (this.#scoreboards.has(objective)) {
+      this.#scoreboards.delete(objective)
+      return true
+    }
+    return false
   }
 
   // 设置计分项数据
@@ -1861,10 +1884,20 @@ class DataBase {
     } else {
       const scoreboardObjective = mc.getScoreObjective(objective)
       if (scoreboardObjective == null) {
-        this.#scoreboards.delete(objective)
         return false
       } else {
         mc.setPlayerScore(data.name2uuid(name), objective, value)
+        return true
+      }
+    }
+  }
+
+  #validateScoreboard() {
+    const iterator = this.#scoreboards[Symbol.iterator]()
+    const scoreboardObjectives = mc.getAllScoreObjectives().map(item => item.name)
+    for (const item of iterator) {
+      if(!scoreboardObjectives.includes(item[0])) {
+        this.#scoreboards.delete(item[0])
       }
     }
   }
@@ -1875,6 +1908,7 @@ class DataBase {
     for (let i = 0; i < players.length; i++) {
       this.#setScoreboard(objective, players[i], this.get(players[i], key))
     }
+    return true
   }
 
   reloadAllScoreboards() {
@@ -1885,6 +1919,7 @@ class DataBase {
         this.#setScoreboard(item[0], players[i], this.get(players[i], item[1]))
       }
     }
+    return true
   }
 
   // 获取方块放置记录
