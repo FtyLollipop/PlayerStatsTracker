@@ -1864,7 +1864,7 @@ class DataBase {
     return objectiveList
   }
 
-  // 添加计分板
+  // 添加计分板映射
   addScoreboard(objective, key) {
     if (!this.#scoreboards.has(objective)) {
       this.#scoreboards.set(objective, key)
@@ -1874,7 +1874,7 @@ class DataBase {
     return false
   }
 
-  // 删除计分板
+  // 删除计分板映射
   deleteScoreboard(objective) {
     if (this.#scoreboards.has(objective)) {
       this.#scoreboards.delete(objective)
