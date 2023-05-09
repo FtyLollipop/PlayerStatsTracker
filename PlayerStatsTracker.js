@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 2, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 3, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -53,7 +53,35 @@ const tStrings = {
         noSuchNumber: '无此编号的排行榜'
       },
       statsmapping: {
-        description: '统计信息映射到计分板'
+        description: '统计信息映射到计分板',
+        specifyOption: '请指定操作',
+        noMapping: '当前不存在任何映射',
+        existMapping: '已映射的计分项：',
+        availableNumber: '可映射的编号：',
+        objectiveMapped: '该计分项已存在映射',
+        noSuchObjective: '该计分项不存在',
+        noSuchNumber: '该编号不存在',
+        addSuccess: '添加映射完成',
+        addFailed: '添加映射失败',
+        objectiveNotMapped: '该计分项不存在映射',
+        removeSuccess: '删除映射完成',
+        removeFailed: '删除映射失败',
+        reloadSuccess: '映射重载完成',
+        formTitle: '统计信息映射到计分板',
+        listMapping: '查看映射',
+        addMapping: '添加映射',
+        removeMapping: '删除映射',
+        reloadMapping: '重载映射',
+        reloadAllMapping: '重载全部映射',
+        existMappingTitle: '已映射的计分项',
+        noObjectiveAvailable: '当前不存在未映射的计分项',
+        objective: '计分项',
+        stats: '统计信息',
+        mapping: '映射',
+        reloadDescription: '当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复。',
+        reloadAllWarn: '当映射的计分项过多时，重载全部映射可能导致性能问题，确定要重载全部映射吗？',
+        confirm: '确定',
+        cancel: '取消'
       }
     },
     statsCategories: {
@@ -206,6 +234,37 @@ const tStrings = {
         description: 'View ranking',
         useCommandToQuery: 'Please use "ranking <number>" to query the ranking of a certain statistics:',
         noSuchNumber: 'No ranking item with this number.'
+      },
+      statsmapping: {
+        description: 'Map statistics to scoreboard',
+        specifyOption: 'Please specify the option.',
+        noMapping: 'No mapping currently exists.',
+        existMapping: 'Mapped objectives:',
+        availableNumber: 'Mappable numbers:',
+        objectiveMapped: 'This objective already has a mapping.',
+        noSuchObjective: 'This objective does not exist.',
+        noSuchNumber: 'This number does not exist',
+        addSuccess: 'Add mapping complete.',
+        addFailed: 'Add mapping failed.',
+        objectiveNotMapped: 'There is no mapping for this objective.',
+        removeSuccess: 'Remove mapping complete.',
+        removeFailed: 'Remove mapping failed.',
+        reloadSuccess: 'Reload mapping complete.',
+        formTitle: 'Map Statistics to Scoreboard',
+        listMapping: 'View Mapping',
+        addMapping: 'Add Mapping',
+        removeMapping: 'Remove Mapping',
+        reloadMapping: 'Reload Mapping',
+        reloadAllMapping: 'Reload All Mappings',
+        existMappingTitle: 'Mapped Objectives',
+        noObjectiveAvailable: 'There are currently no unmapped objectives.',
+        objective: 'Objective',
+        stats: 'Statistics',
+        mapping: 'Mapping',
+        reloadDescription: 'When the statistics mapped to the scoreboard don\'t match the actual statistics, you can use reload to fix. ',
+        reloadAllWarn: 'If there are too many mapped objectives, reloading all mappings may cause performance problems. Are you sure you want to reload all mappings?',
+        confirm: 'Confirm',
+        cancel: 'Cancel'
       }
     },
     statsCategories: {
@@ -877,7 +936,7 @@ command6.setEnum('add', ['add'])
 command6.setEnum('remove', ['remove'])
 command6.setEnum('reload', ['reaload'])
 command6.setEnum('reloadall', ['realoadall'])
-command6.setEnum('option', ['mapping', 'number'])
+command6.setEnum('option', ['mapping', 'numbers'])
 command6.mandatory('list', ParamType.Enum, 'list', 'list')
 command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
 command6.mandatory('add', ParamType.Enum, 'add', 'add')
@@ -896,20 +955,20 @@ command6.setCallback((cmd, origin, output, results) => {
   const scoreboardMappings = db.getScoreboards()
   const iterator = scoreboardMappings[Symbol.iterator]()
   if (!origin.player && !results.list && !results.add && !results.remove) {
-    output.error('请指定操作')
+    output.error(tStrings.commands.statsmapping.specifyOption)
   } else if (results.list) { // 列出映射或统计键名
     if (results.option === 'mapping') {
       if (scoreboardMappings.size === 0) {
-        output.success('当前不存在任何映射')
+        output.success(tStrings.commands.statsmapping.noMapping)
       } else {
-        let str = '已映射的计分项：'
+        let str = tStrings.commands.statsmapping.existMapping
         for (const item of iterator) {
           str += `\n${item[0]} -> ${getTextByKey(item[1])}`
         }
         output.success(str)
       }
-    } else if (results.option === 'number') {
-      let str = '可映射的编号：'
+    } else if (results.option === 'numbers') {
+      let str = tStrings.commands.statsmapping.availableNumber
       for (let i = 0; i < scoreboardMappingKeys.length; i++) {
         str += `\n${i}. ${scoreboardMappingKeys[i].text}`
       }
@@ -918,38 +977,42 @@ command6.setCallback((cmd, origin, output, results) => {
   } else if (results.add) { // 添加映射
     const allObjectives = mc.getAllScoreObjectives()
     if (scoreboardMappings.has(results.objective)) {
-      output.error('该计分项已存在映射')
+      output.error(tStrings.commands.statsmapping.objectiveMapped)
     } else if (!allObjectives.map(item => item.name).includes(results.objective)) {
-      output.error('该计分项不存在')
+      output.error(tStrings.commands.statsmapping.noSuchObjective)
     } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
-      output.error('该编号不存在')
+      output.error(tStrings.commands.statsmapping.noSuchObjective)
     } else {
-      if(db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)) {
-        output.success('添加映射完成')
+      if (db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)) {
+        output.success(tStrings.commands.statsmapping.addSuccess)
       } else {
-        output.failed('添加映射失败')
+        output.failed(tStrings.commands.statsmapping.addFailed)
       }
     }
   } else if (results.remove) { // 删除映射
     if (!scoreboardMappings.has(results.objective)) {
-      output.error('该计分项不存在映射')
+      output.error(tStrings.commands.statsmapping.objectiveNotMapped)
     } else {
-      if(db.deleteScoreboard(results.objective)) {
-        output.success('删除映射完成')
+      if (db.deleteScoreboard(results.objective)) {
+        output.success(tStrings.commands.statsmapping.removeSuccess)
       } else {
-        output.failed('删除映射失败')
+        output.failed(tStrings.commands.statsmapping.removeFailed)
       }
     }
   } else if (results.reload) { // 重载计分项
     if (!scoreboardMappings.has(results.objective)) {
-      output.error('该计分项不存在映射')
+      output.error(tStrings.commands.statsmapping.objectiveNotMapped)
     } else {
       db.reloadScoreboard(results.objective)
-      output.success('计分板映射重载完成')
+      output.success(tStrings.commands.statsmapping.reloadSuccess)
     }
   } else if (results.reloadall) { // 重载所有计分项
-    db.reloadAllScoreboards()
-    output.success('计分板映射重载完成')
+    if (scoreboardMappings.size === 0) {
+      output.error(tStrings.commands.statsmapping.noMapping)
+    } else {
+      db.reloadAllScoreboards()
+      output.success(tStrings.commands.statsmapping.reloadSuccess)
+    }
   } else {
     showMapping(origin.player)
   }
@@ -1065,14 +1128,14 @@ function showRanking(player) {
 function showMapping(player) {
   let optionsForm = mc.newSimpleForm()
   let addObjectiveArray = []
-  let deleteObjectiveArray = []
+  let removeObjectiveArray = []
   let reloadObjectiveArray = []
-  optionsForm.setTitle('统计信息映射到计分板')
-  optionsForm.addButton('查看映射')
-  optionsForm.addButton('添加映射')
-  optionsForm.addButton('删除映射')
-  optionsForm.addButton('重载映射')
-  optionsForm.addButton('重载全部映射')
+  optionsForm.setTitle(tStrings.commands.statsmapping.formTitle)
+  optionsForm.addButton(tStrings.commands.statsmapping.listMapping)
+  optionsForm.addButton(tStrings.commands.statsmapping.addMapping)
+  optionsForm.addButton(tStrings.commands.statsmapping.removeMapping)
+  optionsForm.addButton(tStrings.commands.statsmapping.reloadMapping)
+  optionsForm.addButton(tStrings.commands.statsmapping.reloadAllMapping)
   player.sendForm(optionsForm, optionsFormHandler)
 
   function optionsFormHandler(player, id) {
@@ -1082,12 +1145,12 @@ function showMapping(player) {
     switch (id) {
       case 0:
         let listForm = mc.newSimpleForm()
-        listForm.setTitle('已映射的计分项')
+        listForm.setTitle(tStrings.commands.statsmapping.existMappingTitle)
         let str = ''
         for (const item of iterator) {
           str += `${item[0]} -> ${getTextByKey(item[1])}\n`
         }
-        str = str === '' ? '当前不存在任何映射' : str.substring(0, str.length - 1)
+        str = str === '' ? tStrings.commands.statsmapping.noMapping : str.substring(0, str.length - 1)
         listForm.setContent(str)
         player.sendForm(listForm, listFormHandler)
         break
@@ -1097,16 +1160,18 @@ function showMapping(player) {
         let objectiveStringArray = []
         let keyStringArray = []
         addObjectiveArray = []
-        addKeyArray = []
         for (let i = 0; i < objectiveArray.length; i++) {
           if (!mappingArray.includes(objectiveArray[i].name)) {
             objectiveStringArray.push(`${objectiveArray[i].name} : ${objectiveArray[i].displayName}`)
             addObjectiveArray.push(objectiveArray[i].name)
           }
         }
-        if (objectiveArray.length === 0) {
-          player.sendToast('统计信息映射到计分板', '当前无未映射的计分项')
-          break
+        if (objectiveStringArray.length === 0) {
+          let addToastForm = mc.newSimpleForm()
+          addToastForm.setTitle(tStrings.commands.statsmapping.addMapping)
+          addToastForm.setContent(tStrings.commands.statsmapping.noObjectiveAvailable)
+          player.sendForm(addToastForm, returnOptionsForm)
+          return
         }
         for (let i = 0; i < rankingKeyList.length; i++) {
           if (!scoreboardMappingKeysExcept.includes(rankingKeyList[i])) {
@@ -1114,27 +1179,29 @@ function showMapping(player) {
           }
         }
         let addForm = mc.newCustomForm()
-        addForm.setTitle('添加映射')
-        addForm.addDropdown('计分项', objectiveStringArray)
-        addForm.addLabel('映射到')
-        addForm.addDropdown('统计信息', keyStringArray)
+        addForm.setTitle(tStrings.commands.statsmapping.addMapping)
+        addForm.addDropdown(tStrings.commands.statsmapping.objective, objectiveStringArray)
+        addForm.addDropdown(tStrings.stats, keyStringArray)
         addForm.addLabel('')
         player.sendForm(addForm, addFormHandler)
         break
       case 2:
-        let deleteMappingStringArray = []
-        deleteObjectiveArray = []
+        let removeMappingStringArray = []
+        removeObjectiveArray = []
         for (const item of iterator) {
-          deleteMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
-          deleteObjectiveArray.push(item[0])
+          removeMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          removeObjectiveArray.push(item[0])
         }
-        if (deleteMappingStringArray.length === 0) {
-          player.sendToast('统计信息映射到计分板', '当前不存在任何映射')
-          break
+        if (removeMappingStringArray.length === 0) {
+          let addToastForm = mc.newSimpleForm()
+          addToastForm.setTitle(tStrings.commands.statsmapping.removeMapping)
+          addToastForm.setContent(tStrings.commands.statsmapping.noMapping)
+          player.sendForm(addToastForm, returnOptionsForm)
+          return
         }
         let removeForm = mc.newCustomForm()
-        removeForm.setTitle('删除映射')
-        removeForm.addDropdown('映射', deleteMappingStringArray)
+        removeForm.setTitle(tStrings.commands.statsmapping.removeMapping)
+        removeForm.addDropdown(tStrings.commands.statsmapping.mapping, removeMappingStringArray)
         removeForm.addLabel('')
         player.sendForm(removeForm, removeFormHandler)
         break
@@ -1143,72 +1210,77 @@ function showMapping(player) {
         reloadObjectiveArray = []
         for (const item of iterator) {
           reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
-          deleteObjectiveArray.push(item[0])
+          reloadObjectiveArray.push(item[0])
         }
         let reloadForm = mc.newCustomForm()
-        reloadForm.setTitle('重载映射')
-        reloadForm.addLabel('当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复')
-        reloadForm.addDropdown('映射', reloadMappingStringArray)
+        reloadForm.setTitle(tStrings.commands.statsmapping.reloadMapping)
+        reloadForm.addLabel(tStrings.commands.statsmapping.reloadDescription)
+        reloadForm.addDropdown(tStrings.commands.statsmapping.mapping, reloadMappingStringArray)
         reloadForm.addLabel('')
         player.sendForm(reloadForm, reloadFormHandler)
         break
       case 4:
-        player.sendModalForm('重载全部映射', '当映射到计分板的统计信息与实际统计信息不符时，您可以使用重载来修复。当映射的计分项过多时，重载全部映射可能导致性能问题，确定要重载全部映射吗？', '确定', '取消', reloadAllFormHandler)
+        player.sendModalForm(tStrings.commands.statsmapping.reloadAllMapping, `${tStrings.commands.statsmapping.reloadDescription}§6${tStrings.commands.statsmapping.reloadAllWarn}`, tStrings.commands.statsmapping.confirm, tStrings.commands.statsmapping.cancel, reloadAllFormHandler)
         break
     }
   }
 
-  function listFormHandler(player, id) {
+  function returnOptionsForm() {
     player.sendForm(optionsForm, optionsFormHandler)
+  }
+
+  function listFormHandler(player, id) {
+    returnOptionsForm()
   }
 
   function addFormHandler(player, data) {
     if (data == null) {
-      player.sendForm(optionsForm, optionsFormHandler)
+      returnOptionsForm()
+      return
     }
-    if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[2]].key)) {
-      player.sendToast('统计信息映射到计分板', '映射添加完成')
+    if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[1]].key)) {
+      player.sendToast('§e统计信息映射到计分板', '§2映射添加完成')
     } else {
-      player.sendToast('统计信息映射到计分板', '映射添加失败')
+      player.sendToast('§e统计信息映射到计分板', '§c映射添加失败')
     }
-    player.sendForm(optionsForm, optionsFormHandler)
+    returnOptionsForm()
   }
 
   function removeFormHandler(player, data) {
     if (data == null) {
-      player.sendForm(optionsForm, optionsFormHandler)
+      returnOptionsForm()
+      return
     }
-    if (db.deleteScoreboard(addObjectiveArray[data[0]])) {
-      player.sendToast('统计信息映射到计分板', '映射删除完成')
+    if (db.deleteScoreboard(removeObjectiveArray[data[0]])) {
+      player.sendToast('§e统计信息映射到计分板', '§2映射删除完成')
     } else {
-      player.sendToast('统计信息映射到计分板', '映射删除失败')
+      player.sendToast('§e统计信息映射到计分板', '§c映射删除失败')
     }
-    player.sendForm(optionsForm, optionsFormHandler)
+    returnOptionsForm()
   }
 
   function reloadFormHandler(player, data) {
     if (data == null) {
-      player.sendForm(optionsForm, optionsFormHandler)
+      returnOptionsForm()
+      return
     }
     if (db.reloadScoreboard(reloadObjectiveArray[data[1]])) {
-      player.sendToast('统计信息映射到计分板', '映射重载完成')
+      player.sendToast('§e统计信息映射到计分板', '§2映射重载完成')
     } else {
-      player.sendToast('统计信息映射到计分板', '映射重载失败')
+      player.sendToast('§e统计信息映射到计分板', '§c映射重载失败')
     }
-    player.sendToast('统计信息映射到计分板', '映射重载完成')
-    player.sendForm(optionsForm, optionsFormHandler)
+    returnOptionsForm()
   }
 
   function reloadAllFormHandler(player, result) {
     if (result === true) {
       if (db.reloadAllScoreboards()) {
-        player.sendToast('统计信息映射到计分板', '映射重载完成')
+        player.sendToast('§e统计信息映射到计分板', '§2映射重载完成')
       } else {
-        player.sendToast('统计信息映射到计分板', '映射重载失败')
+        player.sendToast('§e统计信息映射到计分板', '§c映射重载失败')
       }
-      player.sendToast('统计信息映射到计分板', '映射重载完成')
     }
-    player.sendForm(optionsForm, optionsFormHandler)
+    returnOptionsForm()
   }
 }
 // ↑ 游戏内菜单 ======================================================================
@@ -1902,7 +1974,7 @@ class DataBase {
   #validateScoreboard() {
     const iterator = this.#scoreboards[Symbol.iterator]()
     for (const item of iterator) {
-      if(!mc.getScoreObjective(item[0])) {
+      if (!mc.getScoreObjective(item[0])) {
         this.#scoreboards.delete(item[0])
       }
     }

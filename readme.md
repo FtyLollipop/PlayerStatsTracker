@@ -45,12 +45,12 @@
 
 `/statsmapping list mapping` 查看计分板映射列表
 
-`/statsmapping list keys ` 查看映射可用的统计信息键名列表
+`/statsmapping list numbers ` 查看映射可用的统计信息编号列表
 
-`/statsmapping add <objective> <key>` 添加计分板映射
+`/statsmapping add <objective> <number>` 添加计分板映射
 
 - `<objective>` 要添加映射的计分项
-- `<key>` 要映射到的统计信息键名
+- `<key>` 要映射到的统计信息编号
 
 `/statsmapping remove <objective> ` 删除计分板映射
 
