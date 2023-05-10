@@ -397,31 +397,31 @@ function statsToFormattedList(stats) {
       title: tStrings.statsCategories.baseinfo,
       titleFormat: '§f§l',
       contents: [
-        { title: tStrings.statsStrings.lastOnline, value: dateToString(new Date(stats.lastOnline)) },
-        { title: tStrings.statsStrings.playTime, value: secToTime(stats.playTime) },
-        { title: tStrings.statsStrings.loginDays, value: stats.loginDays },
-        { title: tStrings.statsStrings.destroyed, value: stats.destroyed },
-        { title: tStrings.statsStrings.placed, value: stats.placed },
-        { title: tStrings.statsStrings.jumped, value: stats.jumped },
+        { title: tStrings.statsStrings.lastOnline, value: dateToString(new Date(stats.lastOnline)), key: 'lastOnline' },
+        { title: tStrings.statsStrings.playTime, value: secToTime(stats.playTime), key: 'playTime' },
+        { title: tStrings.statsStrings.loginDays, value: stats.loginDays, key: 'loginDays' },
+        { title: tStrings.statsStrings.destroyed, value: stats.destroyed, key: 'destroyed' },
+        { title: tStrings.statsStrings.placed, value: stats.placed, key: 'placed' },
+        { title: tStrings.statsStrings.jumped, value: stats.jumped, key: 'jumped' },
         {
-          title: tStrings.statsStrings.distanceMoved, value: stats.distanceMoved.toFixed(2), subContents: [
-            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:boat'], value: (stats.subStats.distanceMoved['minecraft:boat'] + stats.subStats.distanceMoved['minecraft:chest_boat']).toFixed(2) },
-            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:minecart'], value: stats.subStats.distanceMoved['minecraft:minecart'].toFixed(2) },
-            { title: tStrings.statsStrings.subStats.distanceMoved['equus'], value: (stats.subStats.distanceMoved['minecraft:horse'] + stats.subStats.distanceMoved['minecraft:skeleton_horse'] + stats.subStats.distanceMoved['minecraft:zombie_horse'] + stats.subStats.distanceMoved['minecraft:donkey'] + stats.subStats.distanceMoved['minecraft:mule']).toFixed(2) },
-            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:pig'], value: stats.subStats.distanceMoved['minecraft:pig'].toFixed(2) },
-            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:strider'], value: stats.subStats.distanceMoved['minecraft:strider'].toFixed(2) },
-            { title: tStrings.statsStrings.subStats.distanceMoved['aviate'], value: stats.subStats.distanceMoved['aviate'].toFixed(2) }
+          title: tStrings.statsStrings.distanceMoved, value: stats.distanceMoved.toFixed(2), key: 'distanceMoved', subContents: [
+            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:boat'], value: (stats.subStats.distanceMoved['minecraft:boat'] + stats.subStats.distanceMoved['minecraft:chest_boat']).toFixed(2), key: 'minecraft:boat' },
+            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:minecart'], value: stats.subStats.distanceMoved['minecraft:minecart'].toFixed(2), key: 'minecraft:minecart' },
+            { title: tStrings.statsStrings.subStats.distanceMoved['equus'], value: (stats.subStats.distanceMoved['minecraft:horse'] + stats.subStats.distanceMoved['minecraft:skeleton_horse'] + stats.subStats.distanceMoved['minecraft:zombie_horse'] + stats.subStats.distanceMoved['minecraft:donkey'] + stats.subStats.distanceMoved['minecraft:mule']).toFixed(2), key: 'equus' },
+            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:pig'], value: stats.subStats.distanceMoved['minecraft:pig'].toFixed(2), key: 'minecraft:pig' },
+            { title: tStrings.statsStrings.subStats.distanceMoved['minecraft:strider'], value: stats.subStats.distanceMoved['minecraft:strider'].toFixed(2), key: 'minecraft:strider' },
+            { title: tStrings.statsStrings.subStats.distanceMoved['aviate'], value: stats.subStats.distanceMoved['aviate'].toFixed(2), key: 'aviate' }
           ]
         },
-        { title: tStrings.statsStrings.totem, value: stats.totem },
-        { title: tStrings.statsStrings.chat, value: stats.chat },
-        { title: tStrings.statsStrings.chatChars, value: stats.chatChars },
-        { title: tStrings.statsStrings.expObtained, value: stats.expObtained },
-        { title: tStrings.statsStrings.highestLevel, value: stats.highestLevel },
+        { title: tStrings.statsStrings.totem, value: stats.totem, key: 'totem' },
+        { title: tStrings.statsStrings.chat, value: stats.chat, key: 'chat' },
+        { title: tStrings.statsStrings.chatChars, value: stats.chatChars, key: 'chatChars' },
+        { title: tStrings.statsStrings.expObtained, value: stats.expObtained, key: 'expObtained' },
+        { title: tStrings.statsStrings.highestLevel, value: stats.highestLevel, key: 'highestLevel' },
         {
-          title: tStrings.statsStrings.ate, value: stats.ate, subContents: [
-            { title: tStrings.statsStrings.subStats.ate['minecraft:golden_apple'], value: stats.subStats.ate['minecraft:golden_apple'] },
-            { title: tStrings.statsStrings.subStats.ate['minecraft:enchanted_golden_apple'], value: stats.subStats.ate['minecraft:enchanted_golden_apple'] }
+          title: tStrings.statsStrings.ate, value: stats.ate, key: 'ate', subContents: [
+            { title: tStrings.statsStrings.subStats.ate['minecraft:golden_apple'], value: stats.subStats.ate['minecraft:golden_apple'], key: 'minecraft:golden_apple' },
+            { title: tStrings.statsStrings.subStats.ate['minecraft:enchanted_golden_apple'], value: stats.subStats.ate['minecraft:enchanted_golden_apple'], key: 'minecraft:enchanted_golden_apple' }
           ]
         }
       ]
@@ -431,19 +431,19 @@ function statsToFormattedList(stats) {
       titleFormat: '§c§l',
       contents: [
         {
-          title: tStrings.statsStrings.killed, value: stats.killed, subContents: [
-            { title: tStrings.statsStrings.subStats.killed['equus'], value: stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:skeleton_horse'] + stats.subStats.killed['minecraft:zombie_horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:wandering_trader'], value: stats.subStats.killed['minecraft:wandering_trader'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:trader_llama'], value: stats.subStats.killed['minecraft:trader_llama'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:iron_golem'], value: stats.subStats.killed['minecraft:iron_golem'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:warden'], value: stats.subStats.killed['minecraft:warden'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:wither'], value: stats.subStats.killed['minecraft:wither'] },
-            { title: tStrings.statsStrings.subStats.killed['minecraft:ender_dragon'], value: stats.subStats.killed['minecraft:ender_dragon'] }
+          title: tStrings.statsStrings.killed, value: stats.killed, key: 'killed', subContents: [
+            { title: tStrings.statsStrings.subStats.killed['equus'], value: stats.subStats.killed['minecraft:horse'] + stats.subStats.killed['minecraft:skeleton_horse'] + stats.subStats.killed['minecraft:zombie_horse'] + stats.subStats.killed['minecraft:donkey'] + stats.subStats.killed['minecraft:mule'], key: 'equus' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:wandering_trader'], value: stats.subStats.killed['minecraft:wandering_trader'], key: 'minecraft:wandering_trader' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:trader_llama'], value: stats.subStats.killed['minecraft:trader_llama'], key: 'minecraft:trader_llama' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:iron_golem'], value: stats.subStats.killed['minecraft:iron_golem'], key: 'minecraft:iron_golem' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:warden'], value: stats.subStats.killed['minecraft:warden'], key: 'minecraft:warden' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:wither'], value: stats.subStats.killed['minecraft:wither'], key: 'minecraft:wither' },
+            { title: tStrings.statsStrings.subStats.killed['minecraft:ender_dragon'], value: stats.subStats.killed['minecraft:ender_dragon'], key: 'minecraft:ender_dragon' }
           ]
         },
-        { title: tStrings.statsStrings.death, value: stats.death },
-        { title: tStrings.statsStrings.damageDealt, value: stats.damageDealt },
-        { title: tStrings.statsStrings.damageTaken, value: stats.damageTaken }
+        { title: tStrings.statsStrings.death, value: stats.death, key: 'death' },
+        { title: tStrings.statsStrings.damageDealt, value: stats.damageDealt, key: 'damageDealt' },
+        { title: tStrings.statsStrings.damageTaken, value: stats.damageTaken, key: 'damageTaken' }
       ]
     },
     {
@@ -451,30 +451,30 @@ function statsToFormattedList(stats) {
       titleFormat: '§7§l',
       contents: [
         {
-          title: tStrings.statsStrings.overworldMined, value: stats.overworldMined, subContents: [
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:coal_ore'], value: stats.subStats.overworldMined['minecraft:coal_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_coal_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_coal_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:iron_ore'], value: stats.subStats.overworldMined['minecraft:iron_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_iron_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_iron_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:copper_ore'], value: stats.subStats.overworldMined['minecraft:copper_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_copper_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_copper_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:lapis_ore'], value: stats.subStats.overworldMined['minecraft:lapis_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_lapis_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_lapis_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:gold_ore'], value: stats.subStats.overworldMined['minecraft:gold_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_gold_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_gold_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:redstone_ore'], value: stats.subStats.overworldMined['minecraft:redstone_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_redstone_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_redstone_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:diamond_ore'], value: stats.subStats.overworldMined['minecraft:diamond_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_diamond_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_diamond_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:emerald_ore'], value: stats.subStats.overworldMined['minecraft:emerald_ore'] },
-            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_emerald_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_emerald_ore'] }
+          title: tStrings.statsStrings.overworldMined, value: stats.overworldMined, key: 'overworldMined', subContents: [
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:coal_ore'], value: stats.subStats.overworldMined['minecraft:coal_ore'], key: 'minecraft:coal_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_coal_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_coal_ore'], key: 'minecraft:deepslate_coal_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:iron_ore'], value: stats.subStats.overworldMined['minecraft:iron_ore'], key: 'minecraft:iron_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_iron_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_iron_ore'], key: 'minecraft:deepslate_iron_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:copper_ore'], value: stats.subStats.overworldMined['minecraft:copper_ore'], key: 'minecraft:copper_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_copper_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_copper_ore'], key: 'minecraft:deepslate_copper_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:lapis_ore'], value: stats.subStats.overworldMined['minecraft:lapis_ore'], key: 'minecraft:lapis_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_lapis_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_lapis_ore'], key: 'minecraft:deepslate_lapis_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:gold_ore'], value: stats.subStats.overworldMined['minecraft:gold_ore'], key: 'minecraft:gold_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_gold_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_gold_ore'], key: 'minecraft:deepslate_gold_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:redstone_ore'], value: stats.subStats.overworldMined['minecraft:redstone_ore'], key: 'minecraft:redstone_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_redstone_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_redstone_ore'], key: 'minecraft:deepslate_redstone_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:diamond_ore'], value: stats.subStats.overworldMined['minecraft:diamond_ore'], key: 'minecraft:diamond_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_diamond_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_diamond_ore'], key: 'minecraft:deepslate_diamond_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:emerald_ore'], value: stats.subStats.overworldMined['minecraft:emerald_ore'], key: 'minecraft:emerald_ore' },
+            { title: tStrings.statsStrings.subStats.overworldMined['minecraft:deepslate_emerald_ore'], value: stats.subStats.overworldMined['minecraft:deepslate_emerald_ore'], key: 'minecraft:deepslate_emerald_ore' }
           ]
         },
         {
-          title: tStrings.statsStrings.netherMined, value: stats.netherMined, subContents: [
-            { title: tStrings.statsStrings.subStats.netherMined['minecraft:quartz_ore'], value: stats.subStats.netherMined['minecraft:quartz_ore'] },
-            { title: tStrings.statsStrings.subStats.netherMined['minecraft:nether_gold_ore'], value: stats.subStats.netherMined['minecraft:nether_gold_ore'] },
-            { title: tStrings.statsStrings.subStats.netherMined['minecraft:ancient_debris'], value: stats.subStats.netherMined['minecraft:ancient_debris'] }
+          title: tStrings.statsStrings.netherMined, value: stats.netherMined, key: 'netherMined', subContents: [
+            { title: tStrings.statsStrings.subStats.netherMined['minecraft:quartz_ore'], value: stats.subStats.netherMined['minecraft:quartz_ore'], key: 'minecraft:quartz_ore' },
+            { title: tStrings.statsStrings.subStats.netherMined['minecraft:nether_gold_ore'], value: stats.subStats.netherMined['minecraft:nether_gold_ore'], key: 'minecraft:nether_gold_ore' },
+            { title: tStrings.statsStrings.subStats.netherMined['minecraft:ancient_debris'], value: stats.subStats.netherMined['minecraft:ancient_debris'], key: 'minecraft:ancient_debris' }
           ]
         }
       ]
@@ -485,31 +485,31 @@ function statsToFormattedList(stats) {
       contents: [
         { title: tStrings.statsStrings.tilled, value: stats.tilled },
         {
-          title: tStrings.statsStrings.planted, value: stats.planted, subContents: [
-            { title: tStrings.statsStrings.subStats.planted['minecraft:wheat'], value: stats.subStats.planted['minecraft:wheat'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:beetroot'], value: stats.subStats.planted['minecraft:beetroot'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:potatoes'], value: stats.subStats.planted['minecraft:potatoes'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:carrots'], value: stats.subStats.planted['minecraft:carrots'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:melon_stem'], value: stats.subStats.planted['minecraft:melon_stem'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:pumpkin_stem'], value: stats.subStats.planted['minecraft:pumpkin_stem'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:torchflower_crop'], value: stats.subStats.planted['minecraft:torchflower_crop'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:pitcher_crop'], value: stats.subStats.planted['minecraft:pitcher_crop'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:cocoa'], value: stats.subStats.planted['minecraft:cocoa'] },
-            { title: tStrings.statsStrings.subStats.planted['minecraft:nether_wart'], value: stats.subStats.planted['minecraft:nether_wart'] },
+          title: tStrings.statsStrings.planted, value: stats.planted, key: 'planted', subContents: [
+            { title: tStrings.statsStrings.subStats.planted['minecraft:wheat'], value: stats.subStats.planted['minecraft:wheat'], key: 'minecraft:wheat' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:beetroot'], value: stats.subStats.planted['minecraft:beetroot'], key: 'minecraft:beetroot' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:potatoes'], value: stats.subStats.planted['minecraft:potatoes'], key: 'minecraft:potatoes' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:carrots'], value: stats.subStats.planted['minecraft:carrots'], key: 'minecraft:carrots' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:melon_stem'], value: stats.subStats.planted['minecraft:melon_stem'], key: 'minecraft:melon_stem' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:pumpkin_stem'], value: stats.subStats.planted['minecraft:pumpkin_stem'], key: 'minecraft:pumpkin_stem' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:torchflower_crop'], value: stats.subStats.planted['minecraft:torchflower_crop'], key: 'minecraft:torchflower_crop' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:pitcher_crop'], value: stats.subStats.planted['minecraft:pitcher_crop'], key: 'minecraft:pitcher_crop' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:cocoa'], value: stats.subStats.planted['minecraft:cocoa'], key: 'minecraft:cocoa' },
+            { title: tStrings.statsStrings.subStats.planted['minecraft:nether_wart'], value: stats.subStats.planted['minecraft:nether_wart'], key: 'minecraft:nether_wart' },
           ]
         },
         {
-          title: tStrings.statsStrings.harvested, value: stats.harvested, subContents: [
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:wheat'], value: stats.subStats.harvested['minecraft:wheat'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:beetroot'], value: stats.subStats.harvested['minecraft:beetroot'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:potatoes'], value: stats.subStats.harvested['minecraft:potatoes'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:carrots'], value: stats.subStats.harvested['minecraft:carrots'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:melon_block'], value: stats.subStats.harvested['minecraft:melon_block'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:pumpkin'], value: stats.subStats.harvested['minecraft:pumpkin'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:torchflower_crop'], value: stats.subStats.harvested['minecraft:torchflower_crop'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:pitcher_crop'], value: stats.subStats.harvested['minecraft:pitcher_crop'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:cocoa'], value: stats.subStats.harvested['minecraft:cocoa'] },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:nether_wart'], value: stats.subStats.harvested['minecraft:nether_wart'] },
+          title: tStrings.statsStrings.harvested, value: stats.harvested, key: 'harvested', subContents: [
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:wheat'], value: stats.subStats.harvested['minecraft:wheat'], key: 'minecraft:wheat' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:beetroot'], value: stats.subStats.harvested['minecraft:beetroot'], key: 'minecraft:beetroot' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:potatoes'], value: stats.subStats.harvested['minecraft:potatoes'], key: 'minecraft:potatoes' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:carrots'], value: stats.subStats.harvested['minecraft:carrots'], key: 'minecraft:carrots' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:melon_block'], value: stats.subStats.harvested['minecraft:melon_block'], key: 'minecraft:melon_block' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:pumpkin'], value: stats.subStats.harvested['minecraft:pumpkin'], key: 'minecraft:pumpkin' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:torchflower_crop'], value: stats.subStats.harvested['minecraft:torchflower_crop'], key: 'minecraft:torchflower_crop' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:pitcher_crop'], value: stats.subStats.harvested['minecraft:pitcher_crop'], key: 'minecraft:pitcher_crop' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:cocoa'], value: stats.subStats.harvested['minecraft:cocoa'], key: 'minecraft:cocoa' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:nether_wart'], value: stats.subStats.harvested['minecraft:nether_wart'], key: 'minecraft:nether_wart' },
           ]
         }
       ]
@@ -519,13 +519,13 @@ function statsToFormattedList(stats) {
       titleFormat: '§3§l',
       contents: [
         {
-          title: tStrings.statsStrings.fished, value: stats.fished, subContents: [
-            { title: tStrings.statsStrings.subStats.fished['fish'], value: stats.subStats.fished['fish'] },
-            { title: tStrings.statsStrings.subStats.fished['treasure'], value: stats.subStats.fished['treasure'] },
-            { title: tStrings.statsStrings.subStats.fished['junk'], value: stats.subStats.fished['junk'] }
+          title: tStrings.statsStrings.fished, value: stats.fished, key: 'fished', subContents: [
+            { title: tStrings.statsStrings.subStats.fished['fish'], value: stats.subStats.fished['fish'], key: 'fish' },
+            { title: tStrings.statsStrings.subStats.fished['treasure'], value: stats.subStats.fished['treasure'], key: 'treasure' },
+            { title: tStrings.statsStrings.subStats.fished['junk'], value: stats.subStats.fished['junk'], key: 'junk' }
           ]
         },
-        { title: tStrings.statsStrings.hooked, value: stats.hooked }
+        { title: tStrings.statsStrings.hooked, value: stats.hooked, key: 'hooked' }
       ]
     }
   ]
@@ -816,6 +816,16 @@ for (let i = 0; i < rankingKeyList.length; i++) {
   }
 }
 
+let statsKeyList = []
+{
+  let formattedList = statsToFormattedList(playerDataTemplate)
+  for (let i = 0; i < formattedList.length; i++) {
+    for (let j = 0; j < formattedList[i].contents.length; j++) {
+      statsKeyList.push(formattedList[i].contents[j])
+    }
+  }
+}
+
 let db
 let newFarmlands = new Set()
 let cakesAten = new Set()
@@ -880,22 +890,51 @@ command2.overload(['list', 'lists'])
 command2.overload(['option', 'player', 'value', 'number1', 'number2'])
 command2.overload(['delete', 'player'])
 command2.setCallback((cmd, origin, output, results) => {
-
-
   if (!origin.player && !results.list && !results.option && !results.delete) {
     output.error('请指定操作')
   } else if (results.list) {
-
-  } else if (results.option) {
-
-  } else if (results.delete) {
-
-  } else {
-    if (!data.name2xuid(results.player) || db.hasPlayer(results.player)) {
-      output.error(tStrings.commands.statsdelete.noPlayerData)
-    } else {
-      db.deletePlayer(results.player)
+    if (results.lists === 'players') {
+      const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
+      let str = '所有玩家列表：'
+      for (let i = 0; i < playerList.length; i++) {
+        str += `\n${playerList[i]}`
+      }
+      output.success(str)
+    } else if (results.lists === 'numbers') {
+      let str = '可操作的统计信息编号：'
+      for (let i = 0; i < statsFormattedList.length; i++) {
+        for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
+          str += `${statsFormattedList[i].contents[j].title}\n`
+          if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+            for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
+              str += `  - ${k}. ${statsFormattedList[i].contents[j].subContents[k].title}\n`
+            }
+          }
+        }
+        str += '\n'
+      }
+      str = str.substring(0, str.length - 2)
     }
+  } else if (results.option) {
+    if (results.option === 'set') {
+
+    } else if (results.option === 'add') {
+
+    } else if (results.option === 'reduce') {
+
+    }
+  } else if (results.delete) {
+    if (!db.hasPlayer(results.player)) {
+      output.error('此玩家无数据')
+    } else {
+      if (db.deletePlayer(results.player)) {
+        output.success('玩家数据删除完成')
+      } else {
+        output.error('玩家数据删除失败')
+      }
+    }
+  } else {
+
   }
 })
 command2.setup()
