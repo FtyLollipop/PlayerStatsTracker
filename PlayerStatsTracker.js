@@ -67,6 +67,7 @@ const tStrings = {
         removeSuccess: '删除映射完成',
         removeFailed: '删除映射失败',
         reloadSuccess: '映射重载完成',
+        reloadFailed: '映射重载失败',
         formTitle: '统计信息映射到计分板',
         listMapping: '查看映射',
         addMapping: '添加映射',
@@ -250,6 +251,7 @@ const tStrings = {
         removeSuccess: 'Remove mapping complete.',
         removeFailed: 'Remove mapping failed.',
         reloadSuccess: 'Reload mapping complete.',
+        reloadFailed: 'Reload mapping failed.',
         formTitle: 'Map Statistics to Scoreboard',
         listMapping: 'View Mapping',
         addMapping: 'Add Mapping',
@@ -1261,9 +1263,9 @@ function showMapping(player) {
       return
     }
     if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[1]].key)) {
-      player.sendToast('§e统计信息映射到计分板', '§2映射添加完成')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§2${tStrings.commands.statsmapping.addSuccess}`)
     } else {
-      player.sendToast('§e统计信息映射到计分板', '§c映射添加失败')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§c${tStrings.commands.statsmapping.addFailed}`)
     }
     returnOptionsForm()
   }
@@ -1274,9 +1276,9 @@ function showMapping(player) {
       return
     }
     if (db.deleteScoreboard(removeObjectiveArray[data[0]])) {
-      player.sendToast('§e统计信息映射到计分板', '§2映射删除完成')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§2${tStrings.commands.statsmapping.removeSuccess}`)
     } else {
-      player.sendToast('§e统计信息映射到计分板', '§c映射删除失败')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§c${tStrings.commands.statsmapping.removeFailed}`)
     }
     returnOptionsForm()
   }
@@ -1287,9 +1289,9 @@ function showMapping(player) {
       return
     }
     if (db.reloadScoreboard(reloadObjectiveArray[data[1]])) {
-      player.sendToast('§e统计信息映射到计分板', '§2映射重载完成')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§2${tStrings.commands.statsmapping.reloadSuccess}`)
     } else {
-      player.sendToast('§e统计信息映射到计分板', '§c映射重载失败')
+      player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§c${tStrings.commands.statsmapping.reloadFailed}`)
     }
     returnOptionsForm()
   }
@@ -1297,9 +1299,9 @@ function showMapping(player) {
   function reloadAllFormHandler(player, result) {
     if (result === true) {
       if (db.reloadAllScoreboards()) {
-        player.sendToast('§e统计信息映射到计分板', '§2映射重载完成')
+        player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§2${tStrings.commands.statsmapping.reloadSuccess}`)
       } else {
-        player.sendToast('§e统计信息映射到计分板', '§c映射重载失败')
+        player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§c${tStrings.commands.statsmapping.reloadFailed}`)
       }
     }
     returnOptionsForm()
