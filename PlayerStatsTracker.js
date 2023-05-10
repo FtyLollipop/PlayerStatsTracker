@@ -860,18 +860,40 @@ command1.setCallback((cmd, origin, output, results) => {
 })
 command1.setup()
 
-let command2 = mc.newCommand('statsdelete', tStrings.commands.statsdelete.description, PermType.Console)
-command2.optional('player', ParamType.String)
-command2.overload(['player'])
+let command2 = mc.newCommand('statsmodify', tStrings.commands.statsmodify.description, PermType.Console)
+command2.setEnum('option', ['set', 'add', 'reduce'])
+command2.setEnum('delete', ['delete'])
+command2.setEnum('list', ['list'])
+command2.setEnum('lists', ['players', 'numbers'])
+command2.mandatory('player', ParamType.String)
+command2.mandatory('value', ParamType.Float)
+command2.mandatory('number1', ParamType.Int)
+command2.optional('number2', ParamType.Int)
+command2.mandatory('option', ParamType.Enum, 'option', 'option', 1)
+command2.mandatory('delete', ParamType.Enum, 'delete', 'delete')
+command2.mandatory('list', ParamType.Enum, 'list', 'list')
+command2.mandatory('lists', ParamType.Enum, 'lists', 'lists', 1)
+command2.overload([])
+command2.overload(['list', 'lists'])
+command2.overload(['option', 'player', 'value', 'number1', 'number2'])
+command2.overload(['delete', 'player'])
 command2.setCallback((cmd, origin, output, results) => {
-  if (results.player) {
+
+
+  if (!origin.player && !results.list && !results.option && !results.delete) {
+    output.error('请指定操作')
+  } else if (results.list) {
+
+  } else if (results.option) {
+
+  } else if (results.delete) {
+
+  } else {
     if (!data.name2xuid(results.player) || db.hasPlayer(results.player)) {
       output.error(tStrings.commands.statsdelete.noPlayerData)
     } else {
       db.deletePlayer(results.player)
     }
-  } else {
-    output.error(tStrings.commands.statsdelete.specifyPlayerName)
   }
 })
 command2.setup()
@@ -936,7 +958,7 @@ command6.setEnum('add', ['add'])
 command6.setEnum('remove', ['remove'])
 command6.setEnum('reload', ['reaload'])
 command6.setEnum('reloadall', ['realoadall'])
-command6.setEnum('option', ['mapping', 'numbers'])
+command6.setEnum('option', ['mappings', 'numbers'])
 command6.mandatory('list', ParamType.Enum, 'list', 'list')
 command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
 command6.mandatory('add', ParamType.Enum, 'add', 'add')
@@ -957,7 +979,7 @@ command6.setCallback((cmd, origin, output, results) => {
   if (!origin.player && !results.list && !results.add && !results.remove) {
     output.error(tStrings.commands.statsmapping.specifyOption)
   } else if (results.list) { // 列出映射或统计键名
-    if (results.option === 'mapping') {
+    if (results.option === 'mappings') {
       if (scoreboardMappings.size === 0) {
         output.success(tStrings.commands.statsmapping.noMapping)
       } else {
@@ -1964,8 +1986,12 @@ class DataBase {
       if (scoreboardObjective == null) {
         return false
       } else {
-        mc.setPlayerScore(data.name2uuid(name), objective, value)
-        return true
+        const uuid = data.name2uuid(name)
+        if (uuid) {
+          mc.setPlayerScore(uuid, objective, value)
+          return true
+        }
+        return false
       }
     }
   }
@@ -1984,8 +2010,14 @@ class DataBase {
   reloadScoreboard(objective) {
     const key = this.#scoreboards.get(objective)
     const players = this.getPlayerList()
+    let leftPlayers = new Set([...data.getAllPlayerInfo().map(item => item.name), ...players])
     for (let i = 0; i < players.length; i++) {
       this.#setScoreboard(objective, players[i], this.get(players[i], key))
+      leftPlayers.delete(players[i])
+    }
+    const leftPlayerList = Array.from(leftPlayers)
+    for (let i = 0; i < leftPlayerList.length; i++) {
+      this.#setScoreboard(objective, leftPlayerList[i], 0)
     }
     return true
   }
@@ -1995,9 +2027,7 @@ class DataBase {
     const players = this.getPlayerList()
     const iterator = this.#scoreboards[Symbol.iterator]()
     for (const item of iterator) {
-      for (let i = 0; i < players.length; i++) {
-        this.#setScoreboard(item[0], players[i], this.get(players[i], item[1]))
-      }
+      this.reloadAllScoreboards(item[0])
     }
     return true
   }
@@ -2158,6 +2188,10 @@ class DataBase {
     this.#db.delete(name)
     this.#kvdb.delete(name)
     this.#dbUpdateTime()
+    const iterator = this.#scoreboards[Symbol.iterator]()
+    for (const item of iterator) {
+      this.#setScoreboard(item[0], name, 0)
+    }
     return true
   }
 
