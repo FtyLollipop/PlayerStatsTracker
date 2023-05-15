@@ -39,13 +39,13 @@
 
 `statsmodify list numbers` 查看可以修改的统计信息编号列表
 
-`statsmodify <set|add|reduce> <player> <value> <number> <subnumber>` 设置/增加/减少玩家统计信息的值
+`statsmodify <set|add|reduce> <player> <value> <number> [subnumber]` 设置/增加/减少玩家统计信息的值
 
 - `<set|add|reduce>` 要进行的修改操作，设置/增加/减少
 - `<player>` 要设置的玩家名称
 - `<value>` 要设置的值
 - `<number>` 要设置的统计信息编号
-- `<subnumber>` 要设置的统计信息子项编号
+- `[subnumber]` 要设置的统计信息子项编号
 
 `statsmodify delete <player>` 删除玩家所有统计信息
 
