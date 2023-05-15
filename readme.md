@@ -27,40 +27,52 @@
 
 ### 命令（控制台使用）
 
-`/stats <player>` 查看玩家统计信息
+`stats <player>` 查看玩家统计信息
 
 - `<player>` 要查询的玩家名称
 
-`/ranking [number]` 查看排行榜
+`ranking [number]` 查看排行榜
 
 - `[number]` 要查询的排行榜编号，为空时列出所有可用编号
 
-`/statsdelete <player>` 删除玩家所有统计信息
+`statsmodify list players` 查看可以修改的玩家列表
+
+`statsmodify list numbers` 查看可以修改的统计信息编号列表
+
+`statsmodify <set|add|reduce> <player> <value> <number> <subnumber>` 设置/增加/减少玩家统计信息的值
+
+- `<set|add|reduce>` 要进行的修改操作，设置/增加/减少
+- `<player>` 要设置的玩家名称
+- `<value>` 要设置的值
+- `<number>` 要设置的统计信息编号
+- `<subnumber>` 要设置的统计信息子项编号
+
+`statsmodify delete <player>` 删除玩家所有统计信息
 
 - `<player>` 要删除的玩家名称
 
-`/statsexport ` 导出统计信息到csv文件
+`statsexport ` 导出统计信息到csv文件
 
-`/statsbackup` 备份统计信息数据库
+`statsbackup` 备份统计信息数据库
 
-`/statsmapping list mapping` 查看计分板映射列表
+`statsmapping list mappings` 查看计分板映射列表
 
-`/statsmapping list numbers ` 查看映射可用的统计信息编号列表
+`statsmapping list numbers ` 查看映射可用的统计信息编号列表
 
-`/statsmapping add <objective> <number>` 添加计分板映射
+`statsmapping add <objective> <number>` 添加计分板映射
 
 - `<objective>` 要添加映射的计分项
 - `<key>` 要映射到的统计信息编号
 
-`/statsmapping remove <objective> ` 删除计分板映射
+`statsmapping remove <objective> ` 删除计分板映射
 
 - `<objective>` 要删除映射的计分项
 
-`/statsmapping reload <objective> ` 重载计分板映射
+`statsmapping reload <objective> ` 重载计分板映射
 
 - `<objective>` 要重载的计分项
 
-`/statsmapping reloadall ` 重载全部计分板映射
+`statsmapping reloadall ` 重载全部计分板映射
 
 ## 安装
 

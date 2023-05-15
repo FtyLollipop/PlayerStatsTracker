@@ -879,22 +879,21 @@ command2.setEnum('list', ['list'])
 command2.setEnum('lists', ['players', 'numbers'])
 command2.mandatory('player', ParamType.String)
 command2.mandatory('value', ParamType.Float)
-command2.mandatory('number1', ParamType.Int)
-command2.optional('number2', ParamType.Int)
+command2.mandatory('number', ParamType.Int)
+command2.optional('subnumber', ParamType.Int)
 command2.mandatory('option', ParamType.Enum, 'option', 'option', 1)
 command2.mandatory('delete', ParamType.Enum, 'delete', 'delete')
 command2.mandatory('list', ParamType.Enum, 'list', 'list')
 command2.mandatory('lists', ParamType.Enum, 'lists', 'lists', 1)
-command2.overload([])
 command2.overload(['list', 'lists'])
-command2.overload(['option', 'player', 'value', 'number1', 'number2'])
+command2.overload(['option', 'player', 'value', 'number', 'subnumber'])
 command2.overload(['delete', 'player'])
 command2.setCallback((cmd, origin, output, results) => {
+  const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
   if (!origin.player && !results.list && !results.option && !results.delete) {
     output.error('请指定操作')
   } else if (results.list) {
     if (results.lists === 'players') {
-      const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
       let str = '所有玩家列表：'
       for (let i = 0; i < playerList.length; i++) {
         str += `\n${playerList[i]}`
@@ -902,9 +901,11 @@ command2.setCallback((cmd, origin, output, results) => {
       output.success(str)
     } else if (results.lists === 'numbers') {
       let str = '可操作的统计信息编号：'
+      let numberCount = 0
       for (let i = 0; i < statsFormattedList.length; i++) {
         for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
-          str += `${statsFormattedList[i].contents[j].title}\n`
+          str += `${numberCount}. ${statsFormattedList[i].contents[j].title}\n`
+          numberCount++
           if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
             for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
               str += `  - ${k}. ${statsFormattedList[i].contents[j].subContents[k].title}\n`
@@ -916,12 +917,77 @@ command2.setCallback((cmd, origin, output, results) => {
       str = str.substring(0, str.length - 2)
     }
   } else if (results.option) {
-    if (results.option === 'set') {
-
-    } else if (results.option === 'add') {
-
-    } else if (results.option === 'reduce') {
-
+    if(!playerList.includes(results.player)) {
+      output.error('无此玩家')
+      return
+    }
+    let numberCount = 0
+    let key = null
+    let subKey = null
+    for (let i = 0; i < statsFormattedList.length; i++) {
+      for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
+        if (numberCount === results.number) {
+          if (results.subnumber == null) {
+            key = statsFormattedList[i].contents[j].key
+          } else {
+            if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+              for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
+                if (results.subnumber === k) {
+                  subKey = statsFormattedList[i].contents[j].subContents[k].key
+                }
+              }
+            }
+          }
+        }
+        numberCount++
+      }
+    }
+    if (!key || (results.subnumber != null && !subKey)) {
+      output.error('无此编号的统计信息')
+    } else {
+      if (results.option === 'set') {
+        if (value < 0) {
+          output.error('不能设为负数')
+        } else {
+          if (!subKey) {
+            db.set(results.player, key, 'set', value)
+          } else {
+            db.setSub(results.player, key, subKey, 'set', value)
+          }
+        }
+      } else if (results.option === 'add') {
+        if (!subKey) {
+          if (db.get(results.player, 'key') + value < 0) {
+            output.error('不能设为负数')
+          } else {
+            db.set(results.player, key, 'add', value)
+            output.success('修改完成')
+          }
+        } else {
+          if (db.getSub(results.player, 'key', subKey) + value < 0) {
+            output.error('不能设为负数')
+          } else {
+            db.setSub(results.player, key, subKey, 'add', value)
+            output.success('修改完成')
+          }
+        }
+      } else if (results.option === 'reduce') {
+        if (!subKey) {
+          if (db.get(results.player, 'key') - value < 0) {
+            output.error('不能设为负数')
+          } else {
+            db.set(results.player, key, 'reduce', value)
+            output.success('修改完成')
+          }
+        } else {
+          if (db.getSub(results.player, 'key', subKey) - value < 0) {
+            output.error('不能设为负数')
+          } else {
+            db.setSub(results.player, key, subKey, 'reduce', value)
+            output.success('修改完成')
+          }
+        }
+      }
     }
   } else if (results.delete) {
     if (!db.hasPlayer(results.player)) {
@@ -933,8 +999,6 @@ command2.setCallback((cmd, origin, output, results) => {
         output.error('玩家数据删除失败')
       }
     }
-  } else {
-
   }
 })
 command2.setup()
