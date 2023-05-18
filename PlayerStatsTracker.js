@@ -442,8 +442,8 @@ function statsToFormattedList(stats) {
           ]
         },
         { title: tStrings.statsStrings.death, value: stats.death, key: 'death' },
-        { title: tStrings.statsStrings.damageDealt, value: stats.damageDealt, key: 'damageDealt' },
-        { title: tStrings.statsStrings.damageTaken, value: stats.damageTaken, key: 'damageTaken' }
+        { title: tStrings.statsStrings.damageDealt, value: stats.damageDealt.toFixed(2), key: 'damageDealt' },
+        { title: tStrings.statsStrings.damageTaken, value: stats.damageTaken.toFixed(2), key: 'damageTaken' }
       ]
     },
     {
@@ -917,7 +917,7 @@ command2.setCallback((cmd, origin, output, results) => {
       str = str.substring(0, str.length - 2)
     }
   } else if (results.option) {
-    if(!playerList.includes(results.player)) {
+    if (!playerList.includes(results.player)) {
       output.error('无此玩家')
       return
     }
