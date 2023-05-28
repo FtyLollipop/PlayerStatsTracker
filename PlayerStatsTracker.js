@@ -32,8 +32,8 @@ const tStrings = {
         specifyPlayerName: '请指定玩家名',
         noPermissionQueryOther: '你无权查询其他玩家'
       },
-      statsdelete: {
-        description: '删除玩家的统计信息',
+      statsmodify: {
+        description: '修改玩家统计信息',
         noPlayerData: '无此玩家数据',
         specifyPlayerName: '请指定玩家名'
       },
@@ -642,6 +642,8 @@ const defaultPlayerData = {
   }
 }
 
+const defaultDataFormattedList = statsToFormattedList(defaultPlayerData)
+
 const listenPlacedBlocks = [
   'minecraft:melon_block',
   'minecraft:pumpkin',
@@ -818,7 +820,7 @@ for (let i = 0; i < rankingKeyList.length; i++) {
 
 let statsKeyList = []
 {
-  let formattedList = statsToFormattedList(playerDataTemplate)
+  let formattedList = statsToFormattedList(defaultPlayerData)
   for (let i = 0; i < formattedList.length; i++) {
     for (let j = 0; j < formattedList[i].contents.length; j++) {
       statsKeyList.push(formattedList[i].contents[j])
@@ -902,19 +904,18 @@ command2.setCallback((cmd, origin, output, results) => {
     } else if (results.lists === 'numbers') {
       let str = '可操作的统计信息编号：'
       let numberCount = 0
-      for (let i = 0; i < statsFormattedList.length; i++) {
-        for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
-          str += `${numberCount}. ${statsFormattedList[i].contents[j].title}\n`
+      for (let i = 0; i < defaultDataFormattedList.length; i++) {
+        for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
+          str += `\n${numberCount}. ${defaultDataFormattedList[i].contents[j].title}`
           numberCount++
-          if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
-            for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
-              str += `  - ${k}. ${statsFormattedList[i].contents[j].subContents[k].title}\n`
+          if (defaultDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+            for (let k = 0; k < defaultDataFormattedList[i].contents[j].subContents.length; k++) {
+              str += `\n  - ${k}. ${defaultDataFormattedList[i].contents[j].subContents[k].title}`
             }
           }
         }
-        str += '\n'
       }
-      str = str.substring(0, str.length - 2)
+      output.success(str)
     }
   } else if (results.option) {
     if (!playerList.includes(results.player)) {
@@ -924,16 +925,16 @@ command2.setCallback((cmd, origin, output, results) => {
     let numberCount = 0
     let key = null
     let subKey = null
-    for (let i = 0; i < statsFormattedList.length; i++) {
-      for (let j = 0; j < statsFormattedList[i].contents.length; j++) {
+    for (let i = 0; i < defaultDataFormattedList.length; i++) {
+      for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
         if (numberCount === results.number) {
-          if (results.subnumber == null) {
-            key = statsFormattedList[i].contents[j].key
-          } else {
-            if (statsFormattedList[i].contents[j].hasOwnProperty('subContents')) {
-              for (let k = 0; k < statsFormattedList[i].contents[j].subContents.length; k++) {
+          key = defaultDataFormattedList[i].contents[j].key
+          if (results.subnumber !== null) {
+            if (defaultDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+              for (let k = 0; k < defaultDataFormattedList[i].contents[j].subContents.length; k++) {
                 if (results.subnumber === k) {
-                  subKey = statsFormattedList[i].contents[j].subContents[k].key
+                  subKey = defaultDataFormattedList[i].contents[j].subContents[k].key
+                  break
                 }
               }
             }
@@ -946,44 +947,45 @@ command2.setCallback((cmd, origin, output, results) => {
       output.error('无此编号的统计信息')
     } else {
       if (results.option === 'set') {
-        if (value < 0) {
+        if (results.value < 0) {
           output.error('不能设为负数')
         } else {
           if (!subKey) {
-            db.set(results.player, key, 'set', value)
+            db.set(results.player, key, 'set', results.value)
           } else {
-            db.setSub(results.player, key, subKey, 'set', value)
+            db.setSub(results.player, key, subKey, 'set', results.value)
           }
+          output.success('修改完成')
         }
       } else if (results.option === 'add') {
         if (!subKey) {
-          if (db.get(results.player, 'key') + value < 0) {
+          if (db.get(results.player, key) + results.value < 0) {
             output.error('不能设为负数')
           } else {
-            db.set(results.player, key, 'add', value)
+            db.set(results.player, key, 'add', results.value)
             output.success('修改完成')
           }
         } else {
-          if (db.getSub(results.player, 'key', subKey) + value < 0) {
+          if (db.getSub(results.player, key, subKey) + results.value < 0) {
             output.error('不能设为负数')
           } else {
-            db.setSub(results.player, key, subKey, 'add', value)
+            db.setSub(results.player, key, subKey, 'add', results.value)
             output.success('修改完成')
           }
         }
       } else if (results.option === 'reduce') {
         if (!subKey) {
-          if (db.get(results.player, 'key') - value < 0) {
+          if (db.get(results.player, key) - results.value < 0) {
             output.error('不能设为负数')
           } else {
-            db.set(results.player, key, 'reduce', value)
+            db.set(results.player, key, 'reduce', results.value)
             output.success('修改完成')
           }
         } else {
-          if (db.getSub(results.player, 'key', subKey) - value < 0) {
+          if (db.getSub(results.player, key, subKey) - results.value < 0) {
             output.error('不能设为负数')
           } else {
-            db.setSub(results.player, key, subKey, 'reduce', value)
+            db.setSub(results.player, key, subKey, 'reduce', results.value)
             output.success('修改完成')
           }
         }
