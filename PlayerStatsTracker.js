@@ -2131,10 +2131,9 @@ class DataBase {
 
   // 重载全部计分板映射
   reloadAllScoreboards() {
-    const players = this.getPlayerList()
     const iterator = this.#scoreboards[Symbol.iterator]()
     for (const item of iterator) {
-      this.reloadAllScoreboards(item[0])
+      this.reloadScoreboard(item[0])
     }
     return true
   }
