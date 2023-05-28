@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 3, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 4, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -34,8 +34,17 @@ const tStrings = {
       },
       statsmodify: {
         description: '修改玩家统计信息',
+        allPlayers: '所有可修改的玩家：',
+        allNumbers: '可修改的统计信息编号：',
+        noSuchPlayer: '无此玩家',
         noPlayerData: '无此玩家数据',
-        specifyPlayerName: '请指定玩家名'
+        noSuchNumber: '无此编号的统计信息',
+        specifyPlayerName: '请指定玩家名',
+        specifyOption: '请指定操作',
+        success: '修改完成',
+        deleteSuccess: '玩家数据删除完成',
+        deleteFailed: '玩家数据删除失败',
+        cannotBeNegative: '不能设为负数',
       },
       statsbackup: {
         description: '备份统计信息数据库',
@@ -69,6 +78,9 @@ const tStrings = {
         reloadSuccess: '映射重载完成',
         reloadFailed: '映射重载失败',
         formTitle: '统计信息映射到计分板',
+        virtual: '虚拟',
+        actual: '实际',
+        virtualDescription: '当设为虚拟时，计分板分数将不会与玩家关联，而只是以玩家名记录。',
         listMapping: '查看映射',
         addMapping: '添加映射',
         removeMapping: '删除映射',
@@ -221,6 +233,20 @@ const tStrings = {
         noPlayerData: 'This player has no data.',
         specifyPlayerName: 'Please specify a player name.'
       },
+      statsmodify: {
+        description: 'Modify player stats',
+        allPlayers: 'All modifiable players:',
+        allNumbers: 'Modifiable statistic numbers:',
+        noSuchPlayer: 'No such player.',
+        noPlayerData: 'This player has no data.',
+        noSuchNumber: 'No statistic for this number.',
+        specifyPlayerName: 'Please specify a player name.',
+        specifyOption: 'Please specify the option.',
+        success: 'Modify complete.',
+        deleteSuccess: 'Delete player data complete.',
+        deleteFailed: 'Delete player data failed.',
+        cannotBeNegative: 'Cannot set to negative.',
+      },
       statsbackup: {
         description: 'Backup statistics database',
         success: 'Database backup complete.',
@@ -247,6 +273,9 @@ const tStrings = {
         noSuchNumber: 'This number does not exist',
         addSuccess: 'Add mapping complete.',
         addFailed: 'Add mapping failed.',
+        virtual: 'Virtual',
+        actual: 'Actual',
+        virtualDescription: 'When set to virtual, the scoreboard score will not be associated with the player, but will only be recorded by the player\'s name.',
         objectiveNotMapped: 'There is no mapping for this objective.',
         removeSuccess: 'Remove mapping complete.',
         removeFailed: 'Remove mapping failed.',
@@ -893,16 +922,16 @@ command2.overload(['delete', 'player'])
 command2.setCallback((cmd, origin, output, results) => {
   const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
   if (!origin.player && !results.list && !results.option && !results.delete) {
-    output.error('请指定操作')
+    output.error(tStrings.commands.statsmodify.specifyOption)
   } else if (results.list) {
     if (results.lists === 'players') {
-      let str = '所有玩家列表：'
+      let str = tStrings.commands.statsmodify.allPlayers
       for (let i = 0; i < playerList.length; i++) {
         str += `\n${playerList[i]}`
       }
       output.success(str)
     } else if (results.lists === 'numbers') {
-      let str = '可操作的统计信息编号：'
+      let str = tStrings.commands.statsmodify.allNumbers
       let numberCount = 0
       for (let i = 0; i < defaultDataFormattedList.length; i++) {
         for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
@@ -919,7 +948,7 @@ command2.setCallback((cmd, origin, output, results) => {
     }
   } else if (results.option) {
     if (!playerList.includes(results.player)) {
-      output.error('无此玩家')
+      output.error(tStrings.commands.statsmodify.noSuchPlayer)
       return
     }
     let numberCount = 0
@@ -944,61 +973,61 @@ command2.setCallback((cmd, origin, output, results) => {
       }
     }
     if (!key || (results.subnumber != null && !subKey)) {
-      output.error('无此编号的统计信息')
+      output.error(tStrings.commands.statsmodify.noSuchNumber)
     } else {
       if (results.option === 'set') {
         if (results.value < 0) {
-          output.error('不能设为负数')
+          output.error(tStrings.commands.statsmodify.cannotBeNegative)
         } else {
           if (!subKey) {
             db.set(results.player, key, 'set', results.value)
           } else {
             db.setSub(results.player, key, subKey, 'set', results.value)
           }
-          output.success('修改完成')
+          output.success(tStrings.commands.statsmodify.success)
         }
       } else if (results.option === 'add') {
         if (!subKey) {
           if (db.get(results.player, key) + results.value < 0) {
-            output.error('不能设为负数')
+            output.error(tStrings.commands.statsmodify.cannotBeNegative)
           } else {
             db.set(results.player, key, 'add', results.value)
-            output.success('修改完成')
+            output.success(tStrings.commands.statsmodify.success)
           }
         } else {
           if (db.getSub(results.player, key, subKey) + results.value < 0) {
-            output.error('不能设为负数')
+            output.error(tStrings.commands.statsmodify.cannotBeNegative)
           } else {
             db.setSub(results.player, key, subKey, 'add', results.value)
-            output.success('修改完成')
+            output.success(tStrings.commands.statsmodify.success)
           }
         }
       } else if (results.option === 'reduce') {
         if (!subKey) {
           if (db.get(results.player, key) - results.value < 0) {
-            output.error('不能设为负数')
+            output.error(tStrings.commands.statsmodify.cannotBeNegative)
           } else {
             db.set(results.player, key, 'reduce', results.value)
-            output.success('修改完成')
+            output.success(tStrings.commands.statsmodify.success)
           }
         } else {
           if (db.getSub(results.player, key, subKey) - results.value < 0) {
-            output.error('不能设为负数')
+            output.error(tStrings.commands.statsmodify.cannotBeNegative)
           } else {
             db.setSub(results.player, key, subKey, 'reduce', results.value)
-            output.success('修改完成')
+            output.success(tStrings.commands.statsmodify.success)
           }
         }
       }
     }
   } else if (results.delete) {
     if (!db.hasPlayer(results.player)) {
-      output.error('此玩家无数据')
+      output.error(tStrings.commands.statsmodify.noPlayerData)
     } else {
       if (db.deletePlayer(results.player)) {
-        output.success('玩家数据删除完成')
+        output.success(tStrings.commands.statsmodify.deleteSuccess)
       } else {
-        output.error('玩家数据删除失败')
+        output.error(tStrings.commands.statsmodify.deleteFailed)
       }
     }
   }
@@ -1093,7 +1122,7 @@ command6.setCallback((cmd, origin, output, results) => {
       } else {
         let str = tStrings.commands.statsmapping.existMapping
         for (const item of iterator) {
-          str += `\n${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`
+          str += `\n${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}`
         }
         output.success(str)
       }
@@ -1278,7 +1307,7 @@ function showMapping(player) {
         listForm.setTitle(tStrings.commands.statsmapping.existMappingTitle)
         let str = ''
         for (const item of iterator) {
-          str += `${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}\n`
+          str += `${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}\n`
         }
         str = str === '' ? tStrings.commands.statsmapping.noMapping : str.substring(0, str.length - 1)
         listForm.setContent(str)
@@ -1312,16 +1341,15 @@ function showMapping(player) {
         addForm.setTitle(tStrings.commands.statsmapping.addMapping)
         addForm.addDropdown(tStrings.commands.statsmapping.objective, objectiveStringArray)
         addForm.addDropdown(tStrings.stats, keyStringArray)
-        addForm.addSwitch('虚拟', false)
-        addForm.addLabel('当设为虚拟时，计分板分数不会与玩家实际绑定，玩家退出服务器后也可正常显示玩家名，但无法正常使用玩家名下方显示分数功能。')
-        addForm.addLabel('')
+        addForm.addSwitch(tStrings.commands.statsmapping.virtual, false)
+        addForm.addLabel(tStrings.commands.statsmapping.virtualDescription)
         player.sendForm(addForm, addFormHandler)
         break
       case 2:
         let removeMappingStringArray = []
         removeObjectiveArray = []
         for (const item of iterator) {
-          removeMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`)
+          removeMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}`)
           removeObjectiveArray.push(item[0])
         }
         if (removeMappingStringArray.length === 0) {
@@ -1341,7 +1369,7 @@ function showMapping(player) {
         let reloadMappingStringArray = []
         reloadObjectiveArray = []
         for (const item of iterator) {
-          reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`)
+          reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}`)
           reloadObjectiveArray.push(item[0])
         }
         let reloadForm = mc.newCustomForm()

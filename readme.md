@@ -59,10 +59,11 @@
 
 `statsmapping list numbers ` 查看映射可用的统计信息编号列表
 
-`statsmapping add <objective> <number>` 添加计分板映射
+`statsmapping add <objective> <number> <virtual>` 添加计分板映射
 
 - `<objective>` 要添加映射的计分项
-- `<key>` 要映射到的统计信息编号
+- `<number>` 要映射到的统计信息编号
+- `<virtual>` 是否为虚拟映射，布尔值，只能为true或false
 
 `statsmapping remove <objective> ` 删除计分板映射
 
