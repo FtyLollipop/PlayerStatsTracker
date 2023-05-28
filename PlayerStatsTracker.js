@@ -1074,9 +1074,10 @@ command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
 command6.mandatory('reloadall', ParamType.Enum, 'reloadall', 'reloadall')
 command6.mandatory('objective', ParamType.String)
 command6.mandatory('number', ParamType.Int)
+command6.mandatory('virtual', ParamType.Bool)
 command6.overload([])
 command6.overload(['list', 'option'])
-command6.overload(['add', 'objective', 'number'])
+command6.overload(['add', 'objective', 'number', 'virtual'])
 command6.overload(['remove', 'objective'])
 command6.overload(['reload', 'objective'])
 command6.overload(['reloadall'])
@@ -1092,7 +1093,7 @@ command6.setCallback((cmd, origin, output, results) => {
       } else {
         let str = tStrings.commands.statsmapping.existMapping
         for (const item of iterator) {
-          str += `\n${item[0]} -> ${getTextByKey(item[1])}`
+          str += `\n${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`
         }
         output.success(str)
       }
@@ -1112,7 +1113,7 @@ command6.setCallback((cmd, origin, output, results) => {
     } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
       output.error(tStrings.commands.statsmapping.noSuchObjective)
     } else {
-      if (db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key)) {
+      if (db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key, results.virtual)) {
         output.success(tStrings.commands.statsmapping.addSuccess)
       } else {
         output.failed(tStrings.commands.statsmapping.addFailed)
@@ -1277,7 +1278,7 @@ function showMapping(player) {
         listForm.setTitle(tStrings.commands.statsmapping.existMappingTitle)
         let str = ''
         for (const item of iterator) {
-          str += `${item[0]} -> ${getTextByKey(item[1])}\n`
+          str += `${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}\n`
         }
         str = str === '' ? tStrings.commands.statsmapping.noMapping : str.substring(0, str.length - 1)
         listForm.setContent(str)
@@ -1311,6 +1312,8 @@ function showMapping(player) {
         addForm.setTitle(tStrings.commands.statsmapping.addMapping)
         addForm.addDropdown(tStrings.commands.statsmapping.objective, objectiveStringArray)
         addForm.addDropdown(tStrings.stats, keyStringArray)
+        addForm.addSwitch('虚拟', false)
+        addForm.addLabel('当设为虚拟时，计分板分数不会与玩家实际绑定，玩家退出服务器后也可正常显示玩家名，但无法正常使用玩家名下方显示分数功能。')
         addForm.addLabel('')
         player.sendForm(addForm, addFormHandler)
         break
@@ -1318,7 +1321,7 @@ function showMapping(player) {
         let removeMappingStringArray = []
         removeObjectiveArray = []
         for (const item of iterator) {
-          removeMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          removeMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`)
           removeObjectiveArray.push(item[0])
         }
         if (removeMappingStringArray.length === 0) {
@@ -1338,7 +1341,7 @@ function showMapping(player) {
         let reloadMappingStringArray = []
         reloadObjectiveArray = []
         for (const item of iterator) {
-          reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1])}`)
+          reloadMappingStringArray.push(`${item[0]} -> ${getTextByKey(item[1].key)} ${item[1].virtual ? '虚拟' : '实际'}`)
           reloadObjectiveArray.push(item[0])
         }
         let reloadForm = mc.newCustomForm()
@@ -1367,7 +1370,7 @@ function showMapping(player) {
       returnOptionsForm()
       return
     }
-    if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[1]].key)) {
+    if (db.addScoreboard(addObjectiveArray[data[0]], scoreboardMappingKeys[data[1]].key, data[2])) {
       player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§2${tStrings.commands.statsmapping.addSuccess}`)
     } else {
       player.sendToast(`§e${tStrings.commands.statsmapping.formTitle}`, `§c${tStrings.commands.statsmapping.addFailed}`)
@@ -2057,8 +2060,8 @@ class DataBase {
   // 通过统计键名获取计分项
   #getScoreboardsByKey(key) {
     let objectiveList = []
-    for (let [objectiveValue, keyValue] of this.#scoreboards) {
-      if (keyValue === key) {
+    for (let [objectiveValue, value] of this.#scoreboards) {
+      if (value.key === key) {
         objectiveList.push(objectiveValue)
       }
     }
@@ -2066,9 +2069,9 @@ class DataBase {
   }
 
   // 添加计分板映射
-  addScoreboard(objective, key) {
+  addScoreboard(objective, key, virtual) {
     if (!this.#scoreboards.has(objective)) {
-      this.#scoreboards.set(objective, key)
+      this.#scoreboards.set(objective, { key, virtual })
       this.reloadScoreboard(objective)
       return true
     }
@@ -2093,10 +2096,17 @@ class DataBase {
       if (scoreboardObjective == null) {
         return false
       } else {
-        const uuid = data.name2uuid(name)
-        if (uuid) {
-          mc.setPlayerScore(uuid, objective, value)
+        if (this.#scoreboards.get(objective).virtual) {
+          if (scoreboardObjective.setScore(name, value) === 0) {
+            scoreboardObjective.setScore(name, value)
+          }
           return true
+        } else {
+          const uuid = data.name2uuid(name)
+          if (uuid) {
+            mc.setPlayerScore(uuid, objective, value)
+            return true
+          }
         }
         return false
       }
@@ -2115,7 +2125,7 @@ class DataBase {
 
   // 重载计分板映射
   reloadScoreboard(objective) {
-    const key = this.#scoreboards.get(objective)
+    const key = this.#scoreboards.get(objective).key
     const players = this.getPlayerList()
     let leftPlayers = new Set([...data.getAllPlayerInfo().map(item => item.name), ...players])
     for (let i = 0; i < players.length; i++) {
