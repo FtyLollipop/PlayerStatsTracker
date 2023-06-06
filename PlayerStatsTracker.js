@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 4, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 5, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1763,6 +1763,7 @@ mc.listen('onConsumeTotem', (player) => {
 
 // 玩家对方快使用物品
 mc.listen('onUseItemOn', (player, item, block, side, pos) => {
+  if (player.isSimulatedPlayer()) { return }
   const hoes = [
     'minecraft:wooden_hoe',
     'minecraft:stone_hoe',
