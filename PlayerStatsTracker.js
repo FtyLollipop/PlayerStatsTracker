@@ -1830,6 +1830,7 @@ mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
 
 // 破坏方块
 mc.listen('onDestroyBlock', (player, block) => {
+  if (player.isSimulatedPlayer()) { return }
   const cropsGrownData = {
     'minecraft:wheat': [7],
     'minecraft:potatoes': [7],
@@ -1844,7 +1845,6 @@ mc.listen('onDestroyBlock', (player, block) => {
     'minecraft:lit_redstone_ore',
     'minecraft:lit_deepslate_redstone_ore'
   ]
-  if (player.isSimulatedPlayer()) { return }
   db.set(player.realName, 'destroyed', 'add', 1)
   if (defaultPlayerData.subStats.harvested.hasOwnProperty(block.type)) {
     if (cropsGrownData.hasOwnProperty(block.type) && cropsGrownData[block.type].includes(block.tileData)) {
