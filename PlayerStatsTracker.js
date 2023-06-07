@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 5, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 4, 2])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1656,7 +1656,7 @@ function updateDistanceMoved(player) {
 
 // 进入游戏
 mc.listen('onJoin', (player) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   updateLastOnline(player.realName)
   player.setExtraData('playTimeTimer', setInterval(() => {
     db.set(player.realName, 'playTime', 'add', 1)
@@ -1669,7 +1669,7 @@ mc.listen('onJoin', (player) => {
 
 // 离开游戏
 mc.listen('onLeft', (player) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   if (player.getExtraData('playTimeTimer')) {
     clearInterval(player.getExtraData('playTimeTimer'))
   }
@@ -1683,18 +1683,18 @@ mc.listen('onLeft', (player) => {
 
 // 死亡
 mc.listen('onPlayerDie', (player, source) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'death', 'add', 1)
 })
 
 // 生物死亡
 mc.listen('onMobDie', (mob, source, cause) => {
   if (source?.isPlayer()) {
-    const pl = source.toPlayer()
-    if (!pl.isSimulatedPlayer()) {
-      db.set(pl.realName, 'killed', 'add', 1)
+    const player = source.toPlayer()
+    if (!player.isSimulatedPlayer() && player.realName !== undefined) {
+      db.set(player.realName, 'killed', 'add', 1)
       if (defaultPlayerData.subStats.killed.hasOwnProperty(mob.type)) {
-        db.setSub(pl.realName, 'killed', mob.type, 'add', 1)
+        db.setSub(player.realName, 'killed', mob.type, 'add', 1)
       }
     }
   }
@@ -1702,7 +1702,7 @@ mc.listen('onMobDie', (mob, source, cause) => {
 
 // 聊天
 mc.listen('onChat', (player, msg) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'chat', 'add', 1)
   const iterator = msg[Symbol.iterator]()
   let theChar = iterator.next()
@@ -1716,22 +1716,22 @@ mc.listen('onChat', (player, msg) => {
 
 // 跳跃
 mc.listen('onJump', (player) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'jumped', 'add', 1)
 })
 
 // 生物受伤
 mc.listen('onMobHurt', (mob, source, damage, cause) => {
   if (mob?.isPlayer()) {
-    const pl = mob.toPlayer()
-    if (!pl.isSimulatedPlayer()) {
-      db.set(pl.realName, 'damageTaken', 'add', damage)
+    const player = mob.toPlayer()
+    if (!player.isSimulatedPlayer() && player.realName !== undefined) {
+      db.set(player.realName, 'damageTaken', 'add', damage)
     }
   }
   if (source?.isPlayer()) {
-    const pl = source.toPlayer()
-    if (!pl.isSimulatedPlayer()) {
-      db.set(pl.realName, 'damageDealt', 'add', damage)
+    const player = source.toPlayer()
+    if (!player.isSimulatedPlayer() && player.realName !== undefined) {
+      db.set(player.realName, 'damageDealt', 'add', damage)
     }
   }
 })
@@ -1740,7 +1740,7 @@ mc.listen('onMobHurt', (mob, source, damage, cause) => {
 mc.listen('onRide', (entity1, entity2) => {
   if (entity1?.isPlayer()) {
     const player = entity1.toPlayer()
-    if (!player.isSimulatedPlayer()) {
+    if (!player.isSimulatedPlayer() && player.realName !== undefined) {
       player.setExtraData('riding', entity2.type)
     }
   }
@@ -1748,7 +1748,7 @@ mc.listen('onRide', (entity1, entity2) => {
 
 // 吃食物
 mc.listen('onAte', (player, item) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'ate', 'add', 1)
   if (defaultPlayerData.subStats.ate.hasOwnProperty(item.type)) {
     db.setSub(player.realName, 'ate', item.type, 'add', 1)
@@ -1757,13 +1757,13 @@ mc.listen('onAte', (player, item) => {
 
 // 消耗图腾
 mc.listen('onConsumeTotem', (player) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'totem', 'add', 1)
 })
 
 // 玩家对方快使用物品
 mc.listen('onUseItemOn', (player, item, block, side, pos) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   const hoes = [
     'minecraft:wooden_hoe',
     'minecraft:stone_hoe',
@@ -1830,7 +1830,7 @@ mc.listen('onBlockChanged', (beforeBlock, afterBlock) => {
 
 // 破坏方块
 mc.listen('onDestroyBlock', (player, block) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   const cropsGrownData = {
     'minecraft:wheat': [7],
     'minecraft:potatoes': [7],
@@ -1873,7 +1873,7 @@ mc.listen('onDestroyBlock', (player, block) => {
 
 // 放置方块
 mc.listen('afterPlaceBlock', (player, block) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'placed', 'add', 1)
   if (defaultPlayerData.subStats.planted.hasOwnProperty(block.type)) {
     db.set(player.realName, 'planted', 'add', 1)
@@ -1886,7 +1886,7 @@ mc.listen('afterPlaceBlock', (player, block) => {
 
 // 获得经验
 mc.listen('onExperienceAdd', (player, exp) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   db.set(player.realName, 'expObtained', 'add', exp)
   const playerLevel = player.getLevel()
   if (playerLevel > db.get(player.realName, 'highestLevel')) {
@@ -1896,7 +1896,7 @@ mc.listen('onExperienceAdd', (player, exp) => {
 
 // 钓鱼
 mc.listen('onPlayerPullFishingHook', (player, entity, item) => {
-  if (player.isSimulatedPlayer()) { return }
+  if (player.isSimulatedPlayer() || player.realName === undefined) { return }
   if (entity.type === 'minecraft:item') { // 钓鱼
     db.set(player.realName, 'fished', 'add', 1)
     if (fishingLootTable.fish.includes(item.type)) { // 鱼
