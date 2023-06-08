@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [0, 4, 2])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -171,7 +171,7 @@ const tStrings = {
           'minecraft:carrots': '胡萝卜',
           'minecraft:beetroot': '甜菜根',
           'minecraft:pitcher_crop': '瓶子草',
-          'minecraft:torchflower_crop': '火把花',
+          'minecraft:torchflower': '火把花',
           'minecraft:pumpkin': '南瓜',
           'minecraft:melon_block': '西瓜',
           'minecraft:nether_wart': '下界疣',
@@ -372,7 +372,7 @@ const tStrings = {
           'minecraft:carrots': 'Carrotes',
           'minecraft:beetroot': 'Beetroot',
           'minecraft:pitcher_crop': 'Pitcher',
-          'minecraft:torchflower_crop': 'Torchflower',
+          'minecraft:torchflower': 'Torchflower',
           'minecraft:pumpkin': 'Pumpkin',
           'minecraft:melon_block': 'Melon',
           'minecraft:nether_wart': 'Nether Wart',
@@ -535,7 +535,7 @@ function statsToFormattedList(stats) {
             { title: tStrings.statsStrings.subStats.harvested['minecraft:carrots'], value: stats.subStats.harvested['minecraft:carrots'], key: 'minecraft:carrots' },
             { title: tStrings.statsStrings.subStats.harvested['minecraft:melon_block'], value: stats.subStats.harvested['minecraft:melon_block'], key: 'minecraft:melon_block' },
             { title: tStrings.statsStrings.subStats.harvested['minecraft:pumpkin'], value: stats.subStats.harvested['minecraft:pumpkin'], key: 'minecraft:pumpkin' },
-            { title: tStrings.statsStrings.subStats.harvested['minecraft:torchflower_crop'], value: stats.subStats.harvested['minecraft:torchflower_crop'], key: 'minecraft:torchflower_crop' },
+            { title: tStrings.statsStrings.subStats.harvested['minecraft:torchflower'], value: stats.subStats.harvested['minecraft:torchflower'], key: 'minecraft:torchflower' },
             { title: tStrings.statsStrings.subStats.harvested['minecraft:pitcher_crop'], value: stats.subStats.harvested['minecraft:pitcher_crop'], key: 'minecraft:pitcher_crop' },
             { title: tStrings.statsStrings.subStats.harvested['minecraft:cocoa'], value: stats.subStats.harvested['minecraft:cocoa'], key: 'minecraft:cocoa' },
             { title: tStrings.statsStrings.subStats.harvested['minecraft:nether_wart'], value: stats.subStats.harvested['minecraft:nether_wart'], key: 'minecraft:nether_wart' },
@@ -626,7 +626,7 @@ const defaultPlayerData = {
       'minecraft:carrots': 0,
       'minecraft:beetroot': 0,
       'minecraft:pitcher_crop': 0,
-      'minecraft:torchflower_crop': 0,
+      'minecraft:torchflower': 0,
       'minecraft:pumpkin': 0,
       'minecraft:melon_block': 0,
       'minecraft:nether_wart': 0,
@@ -1837,7 +1837,7 @@ mc.listen('onDestroyBlock', (player, block) => {
     'minecraft:carrots': [7],
     'minecraft:beetroot': [7],
     'minecraft:pitcher_crop': [4],
-    'minecraft:torchflower_crop': [7],
+    'minecraft:torchflower': [7],
     'minecraft:nether_wart': [3],
     'minecraft:cocoa': [8, 9, 10, 11]
   }
