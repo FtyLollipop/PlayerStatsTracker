@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 2])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1048,7 +1048,7 @@ command3.setCallback((cmd, origin, output, results) => {
       }
       output.success(tStrings.commands.ranking.useCommandToQuery + keysStr)
     } else {
-      if (rankingKeyList.length <= results.number || results.number < 0) {
+      if (rankingKeyList.length > results.number && results.number >= 0) {
         let rankingStr = ''
         if (rankingKeyList[results.number].key === 'playTime') {
           rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
@@ -2228,9 +2228,9 @@ class DataBase {
   getPlayers() {
     let names = null
     if (this.#backupFlag) {
-      namesSet = Array.from(this.#db.keys())
+      names = Array.from(this.#db.keys())
     } else {
-      namesSet = this.getPlayerList()
+      names = this.getPlayerList()
     }
     let statsArray = []
     for (let i = 0; i < names.length; i++) {
