@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 2])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 3])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1998,7 +1998,9 @@ class DataBase {
     if (this.#backupFlag) {
       this.#unmountQueue.push(name)
     } else {
-      this.#kvdb.set(name, this.#db.get(name))
+      if(name !== undefined) {
+        this.#kvdb.set(name, this.#db.get(name))
+      }
       this.#db.delete(name)
       this.#dbUpdateTime()
     }
@@ -2007,7 +2009,11 @@ class DataBase {
   // 保存所有内存中的数据(包括放置方块数据)
   #dbSaveAll() {
     for (let [key, value] of this.#db) {
-      this.#kvdb.set(key, value)
+      if(key === undefined) {
+        this.#db.delete(key)
+      } else {
+        this.#kvdb.set(key, value)
+      }
     }
     let data = this.#kvdb.get('data')
     data.placedBlocks = Array.from(this.#placedBlocks)
@@ -2019,7 +2025,9 @@ class DataBase {
   // 保存并卸载所有内存中的数据
   #dbUnmountAll() {
     for (let [key, value] of this.#db) {
-      this.#kvdb.set(key, value)
+      if(key !== undefined) {
+        this.#kvdb.set(key, value)
+      }
       this.#db.delete(key)
     }
     let data = this.#kvdb.get('data')
