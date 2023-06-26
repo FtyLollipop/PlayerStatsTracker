@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 3])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 4])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1052,7 +1052,7 @@ command3.setCallback((cmd, origin, output, results) => {
         let rankingStr = ''
         if (rankingKeyList[results.number].key === 'playTime') {
           rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
-        } else if (['damageTaken', 'damageDealt'].includes(rankingKeyList[results.number].key)) {
+        } else if (['distanceMoved', 'damageTaken', 'damageDealt'].includes(rankingKeyList[results.number].key)) {
           rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, (x) => x.toFixed(2))
         } else {
           rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false)
@@ -1998,7 +1998,7 @@ class DataBase {
     if (this.#backupFlag) {
       this.#unmountQueue.push(name)
     } else {
-      if(name !== undefined) {
+      if (name !== undefined) {
         this.#kvdb.set(name, this.#db.get(name))
       }
       this.#db.delete(name)
@@ -2009,7 +2009,7 @@ class DataBase {
   // 保存所有内存中的数据(包括放置方块数据)
   #dbSaveAll() {
     for (let [key, value] of this.#db) {
-      if(key === undefined) {
+      if (key === undefined) {
         this.#db.delete(key)
       } else {
         this.#kvdb.set(key, value)
@@ -2025,7 +2025,7 @@ class DataBase {
   // 保存并卸载所有内存中的数据
   #dbUnmountAll() {
     for (let [key, value] of this.#db) {
-      if(key !== undefined) {
+      if (key !== undefined) {
         this.#kvdb.set(key, value)
       }
       this.#db.delete(key)
