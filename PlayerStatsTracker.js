@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 4])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 5])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1642,6 +1642,7 @@ function updateDistanceMoved(player) {
   } else {
     player.delExtraData('riding')
   }
+  if (!currentPosition) { return }
   player.setExtraData('lastPosition', currentPosition)
   if (lastPosition?.dimid !== currentPosition.dimid) { return }
 
