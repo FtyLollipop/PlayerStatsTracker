@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 0, 5])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 1, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -863,321 +863,321 @@ let cakesAten = new Set()
 let listenMovePlacedBlocksQueue = []
 // 服务器启动
 mc.listen('onServerStarted', () => {
-  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
-})
-
-// ↓ 命令注册 ======================================================================
-let command1 = mc.newCommand('stats', tStrings.commands.stats.description, PermType.Any)
-command1.optional('player', ParamType.String)
-command1.overload(['player'])
-command1.setCallback((cmd, origin, output, results) => {
-  if (!origin.player) { // 控制台查询
-    if (results.player) { // 控制台有参数
-      if (db.hasPlayer(results.player)) {
-        output.success(`${tStrings.stats} - ${results.player}\n${formatStats(db.getPlayer(results.player), false)}`)
-      } else {
-        output.error(tStrings.commands.stats.noPlayerData)
-      }
-    } else { // 控制台无参数
-      output.error(tStrings.commands.stats.specifyPlayerName)
-    }
-  } else { // 玩家查询
-    if (results.player) { // 玩家有参数
-      if (origin.player.realName === results.player) { // 玩家有参数查自己
-        showStats(origin.player, origin.player.realName)
-      } else { // 玩家有参数查别人
-        if (origin.player.isOP()) {
-          if (db.hasPlayer(results.player)) {
-            showStats(origin.player, results.player)
-          } else {
-            output.error(tStrings.commands.stats.noPlayerData)
-          }
+  // ↓ 命令注册 ======================================================================
+  let command1 = mc.newCommand('stats', tStrings.commands.stats.description, PermType.Any)
+  command1.optional('player', ParamType.String)
+  command1.overload(['player'])
+  command1.setCallback((cmd, origin, output, results) => {
+    if (!origin.player) { // 控制台查询
+      if (results.player) { // 控制台有参数
+        if (db.hasPlayer(results.player)) {
+          output.success(`${tStrings.stats} - ${results.player}\n${formatStats(db.getPlayer(results.player), false)}`)
         } else {
-          output.error(tStrings.commands.stats.noPermissionQueryOther)
+          output.error(tStrings.commands.stats.noPlayerData)
         }
+      } else { // 控制台无参数
+        output.error(tStrings.commands.stats.specifyPlayerName)
       }
-    } else { // 玩家无参数
-      showStats(origin.player, origin.player.realName)
-    }
-  }
-})
-command1.setup()
-
-let command2 = mc.newCommand('statsmodify', tStrings.commands.statsmodify.description, PermType.Console)
-command2.setEnum('option', ['set', 'add', 'reduce'])
-command2.setEnum('delete', ['delete'])
-command2.setEnum('list', ['list'])
-command2.setEnum('lists', ['players', 'numbers'])
-command2.mandatory('player', ParamType.String)
-command2.mandatory('value', ParamType.Float)
-command2.mandatory('number', ParamType.Int)
-command2.optional('subnumber', ParamType.Int)
-command2.mandatory('option', ParamType.Enum, 'option', 'option', 1)
-command2.mandatory('delete', ParamType.Enum, 'delete', 'delete')
-command2.mandatory('list', ParamType.Enum, 'list', 'list')
-command2.mandatory('lists', ParamType.Enum, 'lists', 'lists', 1)
-command2.overload(['list', 'lists'])
-command2.overload(['option', 'player', 'value', 'number', 'subnumber'])
-command2.overload(['delete', 'player'])
-command2.setCallback((cmd, origin, output, results) => {
-  const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
-  if (!origin.player && !results.list && !results.option && !results.delete) {
-    output.error(tStrings.commands.statsmodify.specifyOption)
-  } else if (results.list) {
-    if (results.lists === 'players') {
-      let str = tStrings.commands.statsmodify.allPlayers
-      for (let i = 0; i < playerList.length; i++) {
-        str += `\n${playerList[i]}`
-      }
-      output.success(str)
-    } else if (results.lists === 'numbers') {
-      let str = tStrings.commands.statsmodify.allNumbers
-      let numberCount = 0
-      for (let i = 0; i < defaultDataFormattedList.length; i++) {
-        for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
-          str += `\n${numberCount}. ${defaultDataFormattedList[i].contents[j].title}`
-          numberCount++
-          if (defaultDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
-            for (let k = 0; k < defaultDataFormattedList[i].contents[j].subContents.length; k++) {
-              str += `\n  - ${k}. ${defaultDataFormattedList[i].contents[j].subContents[k].title}`
+    } else { // 玩家查询
+      if (results.player) { // 玩家有参数
+        if (origin.player.realName === results.player) { // 玩家有参数查自己
+          showStats(origin.player, origin.player.realName)
+        } else { // 玩家有参数查别人
+          if (origin.player.isOP()) {
+            if (db.hasPlayer(results.player)) {
+              showStats(origin.player, results.player)
+            } else {
+              output.error(tStrings.commands.stats.noPlayerData)
             }
+          } else {
+            output.error(tStrings.commands.stats.noPermissionQueryOther)
           }
         }
+      } else { // 玩家无参数
+        showStats(origin.player, origin.player.realName)
       }
-      output.success(str)
     }
-  } else if (results.option) {
-    if (!playerList.includes(results.player)) {
-      output.error(tStrings.commands.statsmodify.noSuchPlayer)
-      return
-    }
-    let numberCount = 0
-    let key = null
-    let subKey = null
-    for (let i = 0; i < defaultDataFormattedList.length; i++) {
-      for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
-        if (numberCount === results.number) {
-          key = defaultDataFormattedList[i].contents[j].key
-          if (results.subnumber !== null) {
+  })
+  command1.setup()
+
+  let command2 = mc.newCommand('statsmodify', tStrings.commands.statsmodify.description, PermType.Console)
+  command2.setEnum('option', ['set', 'add', 'reduce'])
+  command2.setEnum('delete', ['delete'])
+  command2.setEnum('list', ['list'])
+  command2.setEnum('lists', ['players', 'numbers'])
+  command2.mandatory('player', ParamType.String)
+  command2.mandatory('value', ParamType.Float)
+  command2.mandatory('number', ParamType.Int)
+  command2.optional('subnumber', ParamType.Int)
+  command2.mandatory('option', ParamType.Enum, 'option', 'option', 1)
+  command2.mandatory('delete', ParamType.Enum, 'delete', 'delete')
+  command2.mandatory('list', ParamType.Enum, 'list', 'list')
+  command2.mandatory('lists', ParamType.Enum, 'lists', 'lists', 1)
+  command2.overload(['list', 'lists'])
+  command2.overload(['option', 'player', 'value', 'number', 'subnumber'])
+  command2.overload(['delete', 'player'])
+  command2.setCallback((cmd, origin, output, results) => {
+    const playerList = Array.from(new Set([...data.getAllPlayerInfo().map(item => item.name), ...db.getPlayerList()]))
+    if (!origin.player && !results.list && !results.option && !results.delete) {
+      output.error(tStrings.commands.statsmodify.specifyOption)
+    } else if (results.list) {
+      if (results.lists === 'players') {
+        let str = tStrings.commands.statsmodify.allPlayers
+        for (let i = 0; i < playerList.length; i++) {
+          str += `\n${playerList[i]}`
+        }
+        output.success(str)
+      } else if (results.lists === 'numbers') {
+        let str = tStrings.commands.statsmodify.allNumbers
+        let numberCount = 0
+        for (let i = 0; i < defaultDataFormattedList.length; i++) {
+          for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
+            str += `\n${numberCount}. ${defaultDataFormattedList[i].contents[j].title}`
+            numberCount++
             if (defaultDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
               for (let k = 0; k < defaultDataFormattedList[i].contents[j].subContents.length; k++) {
-                if (results.subnumber === k) {
-                  subKey = defaultDataFormattedList[i].contents[j].subContents[k].key
-                  break
-                }
+                str += `\n  - ${k}. ${defaultDataFormattedList[i].contents[j].subContents[k].title}`
               }
             }
           }
         }
-        numberCount++
+        output.success(str)
       }
-    }
-    if (!key || (results.subnumber != null && !subKey)) {
-      output.error(tStrings.commands.statsmodify.noSuchNumber)
-    } else {
-      if (results.option === 'set') {
-        if (results.value < 0) {
-          output.error(tStrings.commands.statsmodify.cannotBeNegative)
-        } else {
+    } else if (results.option) {
+      if (!playerList.includes(results.player)) {
+        output.error(tStrings.commands.statsmodify.noSuchPlayer)
+        return
+      }
+      let numberCount = 0
+      let key = null
+      let subKey = null
+      for (let i = 0; i < defaultDataFormattedList.length; i++) {
+        for (let j = 0; j < defaultDataFormattedList[i].contents.length; j++) {
+          if (numberCount === results.number) {
+            key = defaultDataFormattedList[i].contents[j].key
+            if (results.subnumber !== null) {
+              if (defaultDataFormattedList[i].contents[j].hasOwnProperty('subContents')) {
+                for (let k = 0; k < defaultDataFormattedList[i].contents[j].subContents.length; k++) {
+                  if (results.subnumber === k) {
+                    subKey = defaultDataFormattedList[i].contents[j].subContents[k].key
+                    break
+                  }
+                }
+              }
+            }
+          }
+          numberCount++
+        }
+      }
+      if (!key || (results.subnumber != null && !subKey)) {
+        output.error(tStrings.commands.statsmodify.noSuchNumber)
+      } else {
+        if (results.option === 'set') {
+          if (results.value < 0) {
+            output.error(tStrings.commands.statsmodify.cannotBeNegative)
+          } else {
+            if (!subKey) {
+              db.set(results.player, key, 'set', results.value)
+            } else {
+              db.setSub(results.player, key, subKey, 'set', results.value)
+            }
+            output.success(tStrings.commands.statsmodify.success)
+          }
+        } else if (results.option === 'add') {
           if (!subKey) {
-            db.set(results.player, key, 'set', results.value)
+            if (db.get(results.player, key) + results.value < 0) {
+              output.error(tStrings.commands.statsmodify.cannotBeNegative)
+            } else {
+              db.set(results.player, key, 'add', results.value)
+              output.success(tStrings.commands.statsmodify.success)
+            }
           } else {
-            db.setSub(results.player, key, subKey, 'set', results.value)
+            if (db.getSub(results.player, key, subKey) + results.value < 0) {
+              output.error(tStrings.commands.statsmodify.cannotBeNegative)
+            } else {
+              db.setSub(results.player, key, subKey, 'add', results.value)
+              output.success(tStrings.commands.statsmodify.success)
+            }
           }
-          output.success(tStrings.commands.statsmodify.success)
-        }
-      } else if (results.option === 'add') {
-        if (!subKey) {
-          if (db.get(results.player, key) + results.value < 0) {
-            output.error(tStrings.commands.statsmodify.cannotBeNegative)
+        } else if (results.option === 'reduce') {
+          if (!subKey) {
+            if (db.get(results.player, key) - results.value < 0) {
+              output.error(tStrings.commands.statsmodify.cannotBeNegative)
+            } else {
+              db.set(results.player, key, 'reduce', results.value)
+              output.success(tStrings.commands.statsmodify.success)
+            }
           } else {
-            db.set(results.player, key, 'add', results.value)
-            output.success(tStrings.commands.statsmodify.success)
-          }
-        } else {
-          if (db.getSub(results.player, key, subKey) + results.value < 0) {
-            output.error(tStrings.commands.statsmodify.cannotBeNegative)
-          } else {
-            db.setSub(results.player, key, subKey, 'add', results.value)
-            output.success(tStrings.commands.statsmodify.success)
-          }
-        }
-      } else if (results.option === 'reduce') {
-        if (!subKey) {
-          if (db.get(results.player, key) - results.value < 0) {
-            output.error(tStrings.commands.statsmodify.cannotBeNegative)
-          } else {
-            db.set(results.player, key, 'reduce', results.value)
-            output.success(tStrings.commands.statsmodify.success)
-          }
-        } else {
-          if (db.getSub(results.player, key, subKey) - results.value < 0) {
-            output.error(tStrings.commands.statsmodify.cannotBeNegative)
-          } else {
-            db.setSub(results.player, key, subKey, 'reduce', results.value)
-            output.success(tStrings.commands.statsmodify.success)
+            if (db.getSub(results.player, key, subKey) - results.value < 0) {
+              output.error(tStrings.commands.statsmodify.cannotBeNegative)
+            } else {
+              db.setSub(results.player, key, subKey, 'reduce', results.value)
+              output.success(tStrings.commands.statsmodify.success)
+            }
           }
         }
       }
+    } else if (results.delete) {
+      if (!db.hasPlayer(results.player)) {
+        output.error(tStrings.commands.statsmodify.noPlayerData)
+      } else {
+        if (db.deletePlayer(results.player)) {
+          output.success(tStrings.commands.statsmodify.deleteSuccess)
+        } else {
+          output.error(tStrings.commands.statsmodify.deleteFailed)
+        }
+      }
     }
-  } else if (results.delete) {
-    if (!db.hasPlayer(results.player)) {
-      output.error(tStrings.commands.statsmodify.noPlayerData)
+  })
+  command2.setup()
+
+  let command3 = mc.newCommand('ranking', tStrings.commands.ranking.description, PermType.Any)
+  command3.optional('number', ParamType.Int)
+  command3.overload(['number'])
+  command3.setCallback((cmd, origin, output, results) => {
+    if (origin.player) {
+      showRanking(origin.player)
     } else {
-      if (db.deletePlayer(results.player)) {
-        output.success(tStrings.commands.statsmodify.deleteSuccess)
-      } else {
-        output.error(tStrings.commands.statsmodify.deleteFailed)
-      }
-    }
-  }
-})
-command2.setup()
-
-let command3 = mc.newCommand('ranking', tStrings.commands.ranking.description, PermType.Any)
-command3.optional('number', ParamType.Int)
-command3.overload(['number'])
-command3.setCallback((cmd, origin, output, results) => {
-  if (origin.player) {
-    showRanking(origin.player)
-  } else {
-    if (results.number == null) {
-      let keysStr = ''
-      for (let i = 0; i < rankingKeyList.length; i++) {
-        keysStr += `\n${i}. ${rankingKeyList[i].text}`
-      }
-      output.success(tStrings.commands.ranking.useCommandToQuery + keysStr)
-    } else {
-      if (rankingKeyList.length > results.number && results.number >= 0) {
-        let rankingStr = ''
-        if (rankingKeyList[results.number].key === 'playTime') {
-          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
-        } else if (['distanceMoved', 'damageTaken', 'damageDealt'].includes(rankingKeyList[results.number].key)) {
-          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, (x) => x.toFixed(2))
-        } else {
-          rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false)
+      if (results.number == null) {
+        let keysStr = ''
+        for (let i = 0; i < rankingKeyList.length; i++) {
+          keysStr += `\n${i}. ${rankingKeyList[i].text}`
         }
-        output.success(`${tStrings.ranking} - ${rankingKeyList[results.number].text}\n${rankingStr}`)
+        output.success(tStrings.commands.ranking.useCommandToQuery + keysStr)
       } else {
-        output.error(tStrings.commands.ranking.noSuchNumber)
+        if (rankingKeyList.length > results.number && results.number >= 0) {
+          let rankingStr = ''
+          if (rankingKeyList[results.number].key === 'playTime') {
+            rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, secToTime)
+          } else if (['distanceMoved', 'damageTaken', 'damageDealt'].includes(rankingKeyList[results.number].key)) {
+            rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false, (x) => x.toFixed(2))
+          } else {
+            rankingStr = formatRanking(db.getRanking(rankingKeyList[results.number].key), false)
+          }
+          output.success(`${tStrings.ranking} - ${rankingKeyList[results.number].text}\n${rankingStr}`)
+        } else {
+          output.error(tStrings.commands.ranking.noSuchNumber)
+        }
       }
     }
-  }
-})
-command3.setup()
+  })
+  command3.setup()
 
-let command4 = mc.newCommand('statsbackup', tStrings.commands.statsbackup.description, PermType.GameMasters)
-command4.overload([])
-command4.setCallback((cmd, origin, output, results) => {
-  if (db.dbBackup()) {
-    output.success(tStrings.commands.statsbackup.success)
-  } else {
-    output.error(tStrings.commands.statsbackup.failed)
-  }
-})
-command4.setup()
+  let command4 = mc.newCommand('statsbackup', tStrings.commands.statsbackup.description, PermType.GameMasters)
+  command4.overload([])
+  command4.setCallback((cmd, origin, output, results) => {
+    if (db.dbBackup()) {
+      output.success(tStrings.commands.statsbackup.success)
+    } else {
+      output.error(tStrings.commands.statsbackup.failed)
+    }
+  })
+  command4.setup()
 
-let command5 = mc.newCommand('statsexport', tStrings.commands.statsexport.description, PermType.Console)
-command5.overload([])
-command5.setCallback((cmd, origin, output, results) => {
-  if (exportStats()) {
-    output.success(tStrings.commands.statsexport.success)
-  } else {
-    output.error(tStrings.commands.statsexport.failed)
-  }
-})
-command5.setup()
+  let command5 = mc.newCommand('statsexport', tStrings.commands.statsexport.description, PermType.Console)
+  command5.overload([])
+  command5.setCallback((cmd, origin, output, results) => {
+    if (exportStats()) {
+      output.success(tStrings.commands.statsexport.success)
+    } else {
+      output.error(tStrings.commands.statsexport.failed)
+    }
+  })
+  command5.setup()
 
-let command6 = mc.newCommand('statsmapping', tStrings.commands.statsmapping.description, PermType.GameMasters)
-command6.setEnum('list', ['list'])
-command6.setEnum('add', ['add'])
-command6.setEnum('remove', ['remove'])
-command6.setEnum('reload', ['reaload'])
-command6.setEnum('reloadall', ['realoadall'])
-command6.setEnum('option', ['mappings', 'numbers'])
-command6.mandatory('list', ParamType.Enum, 'list', 'list')
-command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
-command6.mandatory('add', ParamType.Enum, 'add', 'add')
-command6.mandatory('remove', ParamType.Enum, 'remove', 'remove')
-command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
-command6.mandatory('reloadall', ParamType.Enum, 'reloadall', 'reloadall')
-command6.mandatory('objective', ParamType.String)
-command6.mandatory('number', ParamType.Int)
-command6.mandatory('virtual', ParamType.Bool)
-command6.overload([])
-command6.overload(['list', 'option'])
-command6.overload(['add', 'objective', 'number', 'virtual'])
-command6.overload(['remove', 'objective'])
-command6.overload(['reload', 'objective'])
-command6.overload(['reloadall'])
-command6.setCallback((cmd, origin, output, results) => {
-  const scoreboardMappings = db.getScoreboards()
-  const iterator = scoreboardMappings[Symbol.iterator]()
-  if (!origin.player && !results.list && !results.add && !results.remove) {
-    output.error(tStrings.commands.statsmapping.specifyOption)
-  } else if (results.list) { // 列出映射或统计键名
-    if (results.option === 'mappings') {
-      if (scoreboardMappings.size === 0) {
-        output.success(tStrings.commands.statsmapping.noMapping)
-      } else {
-        let str = tStrings.commands.statsmapping.existMapping
-        for (const item of iterator) {
-          str += `\n${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}`
+  let command6 = mc.newCommand('statsmapping', tStrings.commands.statsmapping.description, PermType.GameMasters)
+  command6.setEnum('list', ['list'])
+  command6.setEnum('add', ['add'])
+  command6.setEnum('remove', ['remove'])
+  command6.setEnum('reload', ['reaload'])
+  command6.setEnum('reloadall', ['realoadall'])
+  command6.setEnum('option', ['mappings', 'numbers'])
+  command6.mandatory('list', ParamType.Enum, 'list', 'list')
+  command6.mandatory('option', ParamType.Enum, 'option', 'option', 1)
+  command6.mandatory('add', ParamType.Enum, 'add', 'add')
+  command6.mandatory('remove', ParamType.Enum, 'remove', 'remove')
+  command6.mandatory('reload', ParamType.Enum, 'reload', 'reload')
+  command6.mandatory('reloadall', ParamType.Enum, 'reloadall', 'reloadall')
+  command6.mandatory('objective', ParamType.String)
+  command6.mandatory('number', ParamType.Int)
+  command6.mandatory('virtual', ParamType.Bool)
+  command6.overload([])
+  command6.overload(['list', 'option'])
+  command6.overload(['add', 'objective', 'number', 'virtual'])
+  command6.overload(['remove', 'objective'])
+  command6.overload(['reload', 'objective'])
+  command6.overload(['reloadall'])
+  command6.setCallback((cmd, origin, output, results) => {
+    const scoreboardMappings = db.getScoreboards()
+    const iterator = scoreboardMappings[Symbol.iterator]()
+    if (!origin.player && !results.list && !results.add && !results.remove) {
+      output.error(tStrings.commands.statsmapping.specifyOption)
+    } else if (results.list) { // 列出映射或统计键名
+      if (results.option === 'mappings') {
+        if (scoreboardMappings.size === 0) {
+          output.success(tStrings.commands.statsmapping.noMapping)
+        } else {
+          let str = tStrings.commands.statsmapping.existMapping
+          for (const item of iterator) {
+            str += `\n${item[0]} -> ${getTextByKey(item[1].key)} *${item[1].virtual ? tStrings.commands.statsmapping.virtual : tStrings.commands.statsmapping.actual}`
+          }
+          output.success(str)
+        }
+      } else if (results.option === 'numbers') {
+        let str = tStrings.commands.statsmapping.availableNumber
+        for (let i = 0; i < scoreboardMappingKeys.length; i++) {
+          str += `\n${i}. ${scoreboardMappingKeys[i].text}`
         }
         output.success(str)
       }
-    } else if (results.option === 'numbers') {
-      let str = tStrings.commands.statsmapping.availableNumber
-      for (let i = 0; i < scoreboardMappingKeys.length; i++) {
-        str += `\n${i}. ${scoreboardMappingKeys[i].text}`
-      }
-      output.success(str)
-    }
-  } else if (results.add) { // 添加映射
-    const allObjectives = mc.getAllScoreObjectives()
-    if (scoreboardMappings.has(results.objective)) {
-      output.error(tStrings.commands.statsmapping.objectiveMapped)
-    } else if (!allObjectives.map(item => item.name).includes(results.objective)) {
-      output.error(tStrings.commands.statsmapping.noSuchObjective)
-    } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
-      output.error(tStrings.commands.statsmapping.noSuchObjective)
-    } else {
-      if (db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key, results.virtual)) {
-        output.success(tStrings.commands.statsmapping.addSuccess)
+    } else if (results.add) { // 添加映射
+      const allObjectives = mc.getAllScoreObjectives()
+      if (scoreboardMappings.has(results.objective)) {
+        output.error(tStrings.commands.statsmapping.objectiveMapped)
+      } else if (!allObjectives.map(item => item.name).includes(results.objective)) {
+        output.error(tStrings.commands.statsmapping.noSuchObjective)
+      } else if (results.number < 0 || results.number >= scoreboardMappingKeys.length) {
+        output.error(tStrings.commands.statsmapping.noSuchObjective)
       } else {
-        output.failed(tStrings.commands.statsmapping.addFailed)
+        if (db.addScoreboard(results.objective, scoreboardMappingKeys[results.number].key, results.virtual)) {
+          output.success(tStrings.commands.statsmapping.addSuccess)
+        } else {
+          output.failed(tStrings.commands.statsmapping.addFailed)
+        }
       }
-    }
-  } else if (results.remove) { // 删除映射
-    if (!scoreboardMappings.has(results.objective)) {
-      output.error(tStrings.commands.statsmapping.objectiveNotMapped)
-    } else {
-      if (db.deleteScoreboard(results.objective)) {
-        output.success(tStrings.commands.statsmapping.removeSuccess)
+    } else if (results.remove) { // 删除映射
+      if (!scoreboardMappings.has(results.objective)) {
+        output.error(tStrings.commands.statsmapping.objectiveNotMapped)
       } else {
-        output.failed(tStrings.commands.statsmapping.removeFailed)
+        if (db.deleteScoreboard(results.objective)) {
+          output.success(tStrings.commands.statsmapping.removeSuccess)
+        } else {
+          output.failed(tStrings.commands.statsmapping.removeFailed)
+        }
       }
-    }
-  } else if (results.reload) { // 重载计分项
-    if (!scoreboardMappings.has(results.objective)) {
-      output.error(tStrings.commands.statsmapping.objectiveNotMapped)
+    } else if (results.reload) { // 重载计分项
+      if (!scoreboardMappings.has(results.objective)) {
+        output.error(tStrings.commands.statsmapping.objectiveNotMapped)
+      } else {
+        db.reloadScoreboard(results.objective)
+        output.success(tStrings.commands.statsmapping.reloadSuccess)
+      }
+    } else if (results.reloadall) { // 重载所有计分项
+      if (scoreboardMappings.size === 0) {
+        output.error(tStrings.commands.statsmapping.noMapping)
+      } else {
+        db.reloadAllScoreboards()
+        output.success(tStrings.commands.statsmapping.reloadSuccess)
+      }
     } else {
-      db.reloadScoreboard(results.objective)
-      output.success(tStrings.commands.statsmapping.reloadSuccess)
+      showMapping(origin.player)
     }
-  } else if (results.reloadall) { // 重载所有计分项
-    if (scoreboardMappings.size === 0) {
-      output.error(tStrings.commands.statsmapping.noMapping)
-    } else {
-      db.reloadAllScoreboards()
-      output.success(tStrings.commands.statsmapping.reloadSuccess)
-    }
-  } else {
-    showMapping(origin.player)
-  }
+  })
+  command6.setup()
+  // ↑ 命令注册 ======================================================================
+
+  db = new DataBase('./plugins/PlayerStatsTracker/data/', defaultPlayerData, databaseSaveInterval, backupLocation)
 })
-command6.setup()
-// ↑ 命令注册 ======================================================================
 
 // ↓ API ======================================================================
 ll.exports(getStats, 'PlayerStatsTracker', 'getStats')

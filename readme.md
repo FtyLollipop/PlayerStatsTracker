@@ -11,7 +11,7 @@
 - 数据库备份
 - 一些API导出可供其他插件使用
 
-最后经验证支持的BDS版本：1.20.1.02
+最后经验证支持的BDS版本：1.20.62.02
 
 ## 基本使用
 
@@ -77,15 +77,16 @@
 
 ## 安装
 
-1. 安装LiteLoaderBDS。
-2. 将`PlayerStatsTracker.js`放到`BDS根目录\plugins`目录中。
-3. 运行BDS。
+1. 安装LeviLamina。
+2. 向LeviLamina中安装LegacyScriptEngine。
+3. 将`PlayerStatsTracker`文件夹放到`BDS根目录\plugins`目录中。
+4. 运行BDS。
 
 ## 配置
 
 第一次运行时会生成配置文件`BDS根目录\plugins\PlayerStatsTracker\config.json`。
 
-请不要在实际配置文件中添加注释，LiteLoaderBDS不支持带注释的配置文件。
+请不要在实际配置文件中添加注释，LeviLamina不支持带注释的配置文件。
 
 配置文件说明：
 
