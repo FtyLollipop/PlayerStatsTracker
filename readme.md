@@ -1,5 +1,7 @@
 # PlayerStatsTracker - 玩家统计信息
 
+一个[LeviLamina](https://github.com/LiteLDev/LeviLamina) LegacyScriptEngine插件
+
 基本功能：
 
 - 持续统计多种玩家信息
@@ -19,7 +21,7 @@
 
 `/stats [player]` 打开统计信息菜单
 
-- `[player]` 要查询的玩家名称，为空时为自己
+- `[player]` 要查询的玩家名称，留空时为自己
 
 `/ranking` 打开排行榜菜单
 
@@ -77,8 +79,8 @@
 
 ## 安装
 
-1. 安装LeviLamina。
-2. 向LeviLamina中安装LegacyScriptEngine。
+1. 安装[LeviLamina](https://github.com/LiteLDev/LeviLamina)。
+2. 向LeviLamina中安装[LegacyScriptEngine](https://github.com/LiteLDev/LegacyScriptEngine)。
 3. 将`PlayerStatsTracker`文件夹放到`BDS根目录\plugins`目录中。
 4. 运行BDS。
 
