@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 1, 0])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 1, 1])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -835,7 +835,7 @@ const rankingKeys = [
 let rankingKeyList = []
 
 for (let i = 0; i < rankingKeys.length; i++) {
-  rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
+  rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys.map(item => item.key))
 }
 
 const scoreboardMappingKeysExcept = ['lastOnline']
