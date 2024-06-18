@@ -835,7 +835,7 @@ const rankingKeys = [
 let rankingKeyList = []
 
 for (let i = 0; i < rankingKeys.length; i++) {
-  rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys.map(item => item.key))
+  rankingKeyList = rankingKeyList.concat(rankingKeys[i].keys)
 }
 
 const scoreboardMappingKeysExcept = ['lastOnline']
@@ -1209,7 +1209,7 @@ function getFormatedRanking(key) {
 }
 
 function getRanking(key) {
-  if (rankingKeyList.includes(key)) {
+  if (hasRankingKey(key)) {
     return db.getRanking(key)
   } else {
     return null
