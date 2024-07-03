@@ -1,4 +1,4 @@
-ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 1, 1])
+ll.registerPlugin('PlayerStatsTracker', 'Track player stats.', [1, 2, 0])
 
 const defaultConfig = {
   language: 'zh_CN',
@@ -1229,6 +1229,73 @@ function hasRankingKey(key) {
   return false
 }
 // ↑ API ======================================================================
+
+// ↓ PlaceholderAPI ======================================================================
+function papiFormatRanking(ranking, minNum, maxNum, colorful, func = str => str) {
+  const reg = /§./g
+  let str = ''
+  let rank = 0
+  let rankColor = 0
+  let count = 0
+  let prev = null
+  if(ranking.length < minNum) {
+    for(let i = 0; i < minNum - ranking.length; i++) {
+      ranking.push({name: '', data: ''})
+    }
+  }
+  for (let i = 0; i < Math.max(ranking.length, maxNum); i++) {
+    count++
+    if (prev !== ranking[i].data) {
+      rank += count
+      count = 0
+      rankColor++
+    }
+    prev = ranking[i].data
+    if (i !== 0) {
+      str += '\n'
+    }
+    switch (rankColor) {
+      case 1:
+        str += `§g§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
+        break
+      case 2:
+        str += `§7§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
+        break
+      case 3:
+        str += `§6§l${rank}. ${ranking[i].name}: ${func(ranking[i].data)}§r`
+        break
+      default:
+        str += `${rank}. ${ranking[i].name}: ${func(ranking[i].data)}`
+    }
+  }
+  return colorful ? str : str.replace(reg, '')
+}
+
+function papiGetPlayerStats(player, param) {
+  return db.get(player.name, key)
+}
+
+function papiGetRanking(param) {
+  if(rankingKeyList.length >= param['<num>'] || results.number < 0) return ''
+  const key = rankingKeyList[param['<num>']].key
+  const colorful = param['<colorful>'] == 0 ? false : true
+  if (key === 'playTime') {
+    rankingStr = papiFormatRanking(db.getRanking(key), colorful, secToTime)
+  } else if (['distanceMoved', 'damageTaken', 'damageDealt'].includes(key)) {
+    rankingStr = papiFormatRanking(db.getRanking(key), colorful, (x) => x.toFixed(2))
+  } else {
+    rankingStr = papiFormatRanking(db.getRanking(key), colorful)
+  }
+}
+
+{
+  const { PAPI } = require('./GMLIB-LegacyRemoteCallApi/lib/BEPlaceholderAPI-JS')
+  if(PAPI) {
+    PAPI.registerServerPlaceholder(papiGetRanking, "PlayerStatsTracker", "%stats_ranking_<num>_<min>_<max>_<colorful>%")
+    PAPI.registerPlayerPlaceholder(papiGetPlayerStats, "PlayerStatsTracker", "%player_stats_<key>%")
+  }
+}
+// ↑ PlaceholderAPI ======================================================================
 
 // ↓ 游戏内菜单 ======================================================================
 function showStats(player, name) {
