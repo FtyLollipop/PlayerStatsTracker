@@ -1291,8 +1291,9 @@ function papiGetRanking(param) {
 {
   const { PAPI } = require('./GMLIB-LegacyRemoteCallApi/lib/BEPlaceholderAPI-JS')
   if(PAPI) {
-    PAPI.registerServerPlaceholder(papiGetRanking, "PlayerStatsTracker", "%stats_ranking_<num>_<min>_<max>_<colorful>%")
-    PAPI.registerPlayerPlaceholder(papiGetPlayerStats, "PlayerStatsTracker", "%player_stats_<key>%")
+    PAPI.registerServerPlaceholder(papiGetRanking, "PlayerStatsTracker", "stats_ranking_<num>_<min>_<max>_<colorful>")
+    PAPI.registerPlayerPlaceholder(papiGetPlayerStats, "PlayerStatsTracker", "player_stats_<num>")
+    PAPI.registerPlayerPlaceholder(papiGetPlayerStats, "PlayerStatsTracker", "player_stats_<num>_sub_<subnum>")
   }
 }
 // ↑ PlaceholderAPI ======================================================================
