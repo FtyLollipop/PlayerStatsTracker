@@ -2,6 +2,9 @@
     "entry": "PlayerStatsTracker.js",
     "name": "PlayerStatsTracker",
     "type": "lse-quickjs",
+    "description": "Track player stats.",
+    "author": "FtyLollipop",
+    "version": "1.1.2",
     "dependencies": [
         {
             "name": "legacy-script-engine-quickjs"
