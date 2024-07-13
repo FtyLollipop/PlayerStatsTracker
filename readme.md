@@ -13,7 +13,7 @@
 - 数据库备份
 - 一些API导出可供其他插件使用
 
-最后经验证支持的BDS版本：1.20.62.02
+最后经验证支持的BDS版本：1.21.1
 
 ## 基本使用
 
@@ -83,6 +83,8 @@
 2. 向LeviLamina中安装[LegacyScriptEngine](https://github.com/LiteLDev/LegacyScriptEngine)。
 3. 将`PlayerStatsTracker`文件夹放到`BDS根目录\plugins`目录中。
 4. 运行BDS。
+
+注意：如需使用计分板非虚拟映射，请将LeviLamina配置文件（路径为`BDS根目录\plugins\LeviLamina\config.json`）下`playerInfo`项的`alwaysLaunch`改为`true`。
 
 ## 配置
 
